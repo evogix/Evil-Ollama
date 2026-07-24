@@ -1,9 +1,26 @@
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Config & State
 evilollama_config.json
 evilollama_instances.json
 evilollama_instances_export.json
 evilollama_report.html
 evilollama_instances.csv
+
+# Chat exports
 chat_export_*.json
+
+# Logs
 *.log
-backup file: evilollama_instances_backup.json
+
+# Backups
+*_backup.json
+
+# OS
+.DS_Store
+Thumbs.db

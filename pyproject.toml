@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evil-ollama"
+version = "3.0.0"
+description = "🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["ollama", "security", "bug-bounty", "llm", "ai", "pentesting", "red-team"]
+authors = [
+    {name = "evogix"},
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security :: Penetration Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "aiohttp",
+    "requests",
+    "flask",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/evogix/Evil-Ollama"
+"Documentation" = "https://github.com/evogix/Evil-Ollama/blob/main/DOCS.md"
+"Source" = "https://github.com/evogix/Evil-Ollama"
+
+[project.scripts]
+evilollama = "evilollama:main"
+
+[tool.setuptools.packages.find]
+include = ["evilollama*"]
+
+[tool.setuptools.package-data]
+evilollama = ["*.md", "*.txt"]

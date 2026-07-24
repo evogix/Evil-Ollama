@@ -5,5 +5,12 @@
 #   ./launcher.sh vuln --target 1.2.3.4:11434
 #   ./launcher.sh chat --target 1.2.3.4:11434
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec python3 "$SCRIPT_DIR/evilollama.py" "$@"
+SCRIPT_DIR="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
+if [ -f "$SCRIPT_DIR/evilollama/__init__.py" ]; then
+    exec python3 -m evilollama "$@"
+elif [ -f "$SCRIPT_DIR/evilollama.py" ]; then
+    exec python3 "$SCRIPT_DIR/evilollama.py" "$@"
+else
+    echo "Error: evilollama module not found"
+    exit 1
+fi
