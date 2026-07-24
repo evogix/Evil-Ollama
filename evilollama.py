@@ -2041,7 +2041,7 @@ Examples:
     subparsers = parser.add_subparsers(dest="command")
     
     # ─── SCAN ───
-    sp = subparsers.add_parser("scan", help="Scan for Ollama instances (TCP/DNS/CT/Shodan/Censys/FOFA)")
+    sp = subparsers.add_parser("scan", help="Scan for Ollama instances (TCP/DNS/CT/Shodan/Censys/FOFA/Internet)")
     sg = sp.add_mutually_exclusive_group(required=True)
     sg.add_argument("--random", type=int, metavar="N", help="Scan N random public IPs")
     sg.add_argument("--cidr", type=str, metavar="CIDR", help="Scan a CIDR range")
@@ -2051,6 +2051,7 @@ Examples:
     sg.add_argument("--fofa", type=str, metavar="EMAIL:KEY", help="Search FOFA")
     sg.add_argument("--dns", type=str, metavar="DOMAIN", help="DNS-based discovery via subdomain enumeration")
     sg.add_argument("--ct", type=str, metavar="DOMAIN", help="Certificate Transparency log discovery")
+    sg.add_argument("--internet", action="store_true", help="Full internet search: random scan + DNS + CT logs on common domains")
     sp.add_argument("--port", type=int, default=DEFAULT_OLLAMA_PORT)
     sp.add_argument("--concurrent", type=int, default=MAX_CONCURRENT)
     sp.add_argument("--timeout", type=int, default=SCAN_TIMEOUT)
@@ -2174,6 +2175,28 @@ Examples:
             found = discover_by_dns(args.dns, args.port)
         elif args.ct:
             found = discover_by_ct(args.ct, args.port)
+        elif args.internet:
+            log(f"{C.BOLD}🌐 INTERNET-WIDE SCAN MODE{C.END}", "STEP")
+            log(f"Phase 1/3: Scanning 50000 random IPs...", "STEP")
+            ips = generate_random_ips(50000)
+            found = asyncio.run(scan_ips(ips, args.port, args.concurrent))
+            
+            log(f"Phase 2/3: DNS discovery on top cloud domains...", "STEP")
+            cloud_domains = [
+                "digitalocean.com", "aws.amazon.com", "azure.com", "googlecloud.com",
+                "hetzner.com", "ovh.com", "linode.com", "vultr.com",
+                "alibaba.com", "oracle.com", "ibm.com", "scaleway.com"
+            ]
+            for domain in cloud_domains:
+                dns_found = discover_by_dns(domain, args.port)
+                found.extend(dns_found)
+            
+            log(f"Phase 3/3: CT log search on top domains...", "STEP")
+            for domain in cloud_domains[:5]:
+                ct_found = discover_by_ct(domain, args.port)
+                found.extend(ct_found)
+            
+            log(f"🌐 Internet scan complete: {len(found)} total instances", "OK")
         
         # Post-scan
         if args.geo and found:
