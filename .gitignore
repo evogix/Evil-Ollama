@@ -1,1 +1,8 @@
 __pycache__/
+evilollama_config.json
+evilollama_instances.json
+evilollama_instances_export.json
+evilollama_report.html
+evilollama_instances.csv
+chat_export_*.json
+*.log
