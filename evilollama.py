@@ -27,19 +27,31 @@ Usage:
   ./launcher.sh models --pull target model_name     # Download model
   ./launcher.sh models --analyze target model_name  # Analyze model details
   
-  # -- DEPLOY / PUSH MODEL --
+  # -- DEPLOY (pull model onto remote) --
   ./launcher.sh deploy --model gemma:2b --all        # Pull model onto all found instances
   ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434  # Pull to specific target
   
-  # -- FULL OLLAMA API --
-  ./launcher.sh api --target 1.2.3.4:11434 --push mymodel:tag   # Push model to registry
-  ./launcher.sh api --target 1.2.3.4:11434 --create newmodel    # Create model from Modelfile
-  ./launcher.sh api --target 1.2.3.4:11434 --copy old:latest --dest new:latest  # Copy model
-  ./launcher.sh api --target 1.2.3.4:11434 --delete model:tag   # Delete model
-  ./launcher.sh api --target 1.2.3.4:11434 --ps                  # List running models
-  ./launcher.sh api --target 1.2.3.4:11434 --embed nomic-embed-text --prompt "hello"  # Embed
-  ./launcher.sh api --target 1.2.3.4:11434 --generate gemma:2b --prompt "hi"  # Generate
-  ./launcher.sh api --target 1.2.3.4:11434 --version-of           # Version info
+  # -- PUSH (push model from remote to registry) --
+  ./launcher.sh push --target 1.2.3.4:11434 --model mymodel:tag
+  
+  # -- CREATE (create model from Modelfile) --
+  ./launcher.sh create --target 1.2.3.4:11434 --model newmodel --modelfile ./Modelfile
+  ./launcher.sh create --target 1.2.3.4:11434 --model newmodel --from base:latest
+  
+  # -- COPY (copy model within instance) --
+  ./launcher.sh copy --target 1.2.3.4:11434 --source old:latest --dest new:latest
+  
+  # -- REMOVE (delete model from instance) --
+  ./launcher.sh remove --target 1.2.3.4:11434 --model model:tag
+  
+  # -- PS (list running models) --
+  ./launcher.sh ps --target 1.2.3.4:11434
+  
+  # -- EMBED (generate embeddings) --
+  ./launcher.sh embed --target 1.2.3.4:11434 --model nomic-embed-text --prompt "hello world"
+  
+  # -- GENERATE (generate completion) --
+  ./launcher.sh generate --target 1.2.3.4:11434 --model gemma:2b --prompt "tell me a joke"
 
   # -- PROXY --
   ./launcher.sh proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
@@ -1370,110 +1382,115 @@ def api_generate(target: str, model: str, prompt: str, stream: bool = False) -> 
     """POST /api/generate — Generate completion (non-streaming)"""
     return _api_req(target, "POST", "/api/generate", {"model": model, "prompt": prompt, "stream": stream}, timeout=120)
 
-def handle_api_command(args):
-    """Route API subcommands"""
+# ============================================================
+# INDIVIDUAL API COMMAND HANDLERS
+# ============================================================
+
+def cmd_push(args):
     target = args.target
-    import requests
-    
-    if args.push_model:
-        log(f"📤 Pushing model '{args.push_model}' from {target} to registry...", "API")
-        r = api_push(target, args.push_model)
-        if r["ok"]:
-            log(f"  ✅ Push initiated — {r['data'].get('status','ok')}", "OK")
-        else:
-            log(f"  ❌ Push failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.create:
-        log(f"🆕 Creating model '{args.create}' on {target}...", "API")
-        payload = {"name": args.create}
-        if args.modelfile:
-            payload["modelfile"] = args.modelfile
-        if args.from_model:
-            payload["from"] = args.from_model
-        r = _api_req(target, "POST", "/api/create", payload, timeout=600)
-        if r["ok"]:
-            log(f"  ✅ Model '{args.create}' created", "OK")
-        else:
-            log(f"  ❌ Create failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.copy_model:
-        if not args.dest:
-            log("--dest DEST_MODEL required with --copy", "ERROR")
-            return
-        log(f"📋 Copying '{args.copy_model}' → '{args.dest}' on {target}...", "API")
-        r = api_copy(target, args.copy_model, args.dest)
-        if r["ok"]:
-            log(f"  ✅ Copied {args.copy_model} → {args.dest}", "OK")
-        else:
-            log(f"  ❌ Copy failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.delete_model:
-        log(f"🗑️ Deleting model '{args.delete_model}' from {target}...", "API")
-        r = api_delete(target, args.delete_model)
-        if r["ok"] or r["code"] == 200:
-            log(f"  ✅ Deleted '{args.delete_model}'", "OK")
-        else:
-            log(f"  ❌ Delete failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.ps:
-        log(f"📊 Running models on {target}...", "API")
-        r = api_ps(target)
-        if r["ok"]:
-            models = r["data"].get("models", [])
-            if models:
-                print(f"\n{C.BOLD}{C.MAGENTA}🧠 Running Models on {target}{C.END}")
-                print(f"{'='*60}")
-                for m in models:
-                    name = m.get("name", "?")
-                    size = m.get("size", 0)
-                    expires = m.get("expires_at", "N/A")
-                    size_h = f"{size/1e9:.1f}GB" if size else "?"
-                    print(f"  {C.GREEN}{name}{C.END}  ({size_h})  expires: {expires}")
-                print()
-            else:
-                log("  ℹ️ No models currently running", "INFO")
-        else:
-            log(f"  ❌ Failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.embed:
-        if not args.prompt:
-            log("--prompt required with --embed", "ERROR")
-            return
-        log(f"🔮 Generating embedding with '{args.embed}' on {target}...", "API")
-        r = api_embed(target, args.embed, args.prompt)
-        if r["ok"]:
-            emb = r["data"].get("embedding", [])
-            dims = len(emb) if isinstance(emb, list) else "?"
-            log(f"  ✅ Embedding generated — dimensions: {dims}", "OK")
-            if isinstance(emb, list) and len(emb) > 0:
-                print(f"\n{C.CYAN}First 5 values:{C.END} {emb[:5]}")
-                print(f"{C.CYAN}Total dimensions:{C.END} {len(emb)}")
-        else:
-            log(f"  ❌ Embed failed (HTTP {r['code']}): {r['text']}", "ERROR")
-    
-    elif args.generate:
-        if not args.prompt:
-            log("--prompt required with --generate", "ERROR")
-            return
-        log(f"⚡ Generating completion with '{args.generate}' on {target}...", "API")
-        r = api_generate(target, args.generate, args.prompt)
-        if r["ok"]:
-            response = r["data"].get("response", "")
-            print(f"\n{C.BOLD}{C.MAGENTA}⚡ Response from {target}/{args.generate}{C.END}")
+    model = args.model
+    log(f"📤 Pushing model '{model}' from {target} to registry...", "API")
+    r = api_push(target, model)
+    if r["ok"]:
+        log(f"  ✅ Push initiated — {r['data'].get('status','ok')}", "OK")
+    else:
+        log(f"  ❌ Push failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_create(args):
+    target = args.target
+    model = args.model
+    log(f"🆕 Creating model '{model}' on {target}...", "API")
+    payload = {"name": model}
+    if args.modelfile:
+        with open(args.modelfile) as f:
+            payload["modelfile"] = f.read()
+    if args.from_model:
+        payload["from"] = args.from_model
+    r = _api_req(target, "POST", "/api/create", payload, timeout=600)
+    if r["ok"]:
+        log(f"  ✅ Model '{model}' created", "OK")
+    else:
+        log(f"  ❌ Create failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_copy(args):
+    target = args.target
+    log(f"📋 Copying '{args.source}' → '{args.dest}' on {target}...", "API")
+    r = api_copy(target, args.source, args.dest)
+    if r["ok"]:
+        log(f"  ✅ Copied {args.source} → {args.dest}", "OK")
+    else:
+        log(f"  ❌ Copy failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_remove(args):
+    target = args.target
+    model = args.model
+    log(f"🗑️ Removing model '{model}' from {target}...", "API")
+    r = api_delete(target, model)
+    if r["ok"] or r["code"] == 200:
+        log(f"  ✅ Removed '{model}'", "OK")
+    else:
+        log(f"  ❌ Remove failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_ps(args):
+    target = args.target
+    log(f"📊 Running models on {target}...", "API")
+    r = api_ps(target)
+    if r["ok"]:
+        models = r["data"].get("models", [])
+        if models:
+            print(f"\n{C.BOLD}{C.MAGENTA}🧠 Running Models on {target}{C.END}")
             print(f"{'='*60}")
-            print(f"  {response[:1000]}")
-            print(f"{'='*60}\n")
+            for m in models:
+                name = m.get("name", "?")
+                size = m.get("size", 0)
+                expires = m.get("expires_at", "N/A")
+                size_h = f"{size/1e9:.1f}GB" if size else "?"
+                print(f"  {C.GREEN}{name}{C.END}  ({size_h})  expires: {expires}")
+            print()
         else:
-            log(f"  ❌ Generate failed (HTTP {r['code']}): {r['text']}", "ERROR")
+            log("  ℹ️ No models currently running", "INFO")
+    else:
+        log(f"  ❌ Failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_embed(args):
+    target = args.target
+    model = args.model
+    prompt = args.prompt
+    log(f"🔮 Generating embedding with '{model}' on {target}...", "API")
+    r = api_embed(target, model, prompt)
+    if r["ok"]:
+        emb = r["data"].get("embedding", [])
+        if not emb:
+            emb = r["data"].get("embeddings", [])
+        dims = len(emb) if isinstance(emb, list) and emb and isinstance(emb[0], (int, float)) else (len(emb[0]) if isinstance(emb, list) and emb else "?")
+        log(f"  ✅ Embedding generated — dimensions: {dims}", "OK")
+        flat = emb if isinstance(emb, list) and emb and isinstance(emb[0], (int, float)) else (emb[0] if isinstance(emb, list) and emb else [])
+        if flat and len(flat) > 0:
+            print(f"\n{C.CYAN}First 8 values:{C.END} {flat[:8]}")
+            print(f"{C.CYAN}Total dimensions:{C.END} {len(flat)}")
+    else:
+        log(f"  ❌ Embed failed (HTTP {r['code']}): {r['text']}", "ERROR")
+
+def cmd_generate(args):
+    target = args.target
+    model = args.model
+    prompt = args.prompt
+    log(f"⚡ Generating completion with '{model}' on {target}...", "API")
+    r = api_generate(target, model, prompt)
+    if r["ok"]:
+        response = r["data"].get("response", "")
+        print(f"\n{C.BOLD}{C.MAGENTA}⚡ Response from {target}/{model}{C.END}")
+        print(f"{'='*60}")
+        print(f"  {response[:2000]}")
+        print(f"{'='*60}\n")
+    else:
+        log(f"  ❌ Generate failed (HTTP {r['code']}): {r['text']}", "ERROR")
     
-    elif args.version_of:
-        log(f"ℹ️ Version info for {target}...", "API")
-        r = api_version(target)
-        if r["ok"]:
-            ver = r["data"].get("version", "unknown")
-            log(f"  ✅ Ollama version: {ver}", "OK")
-        else:
-            log(f"  ❌ Version check failed (HTTP {r['code']}): {r['text']}", "ERROR")
+    # Also check /api/version as side info
+    vr = api_version(target)
+    if vr["ok"]:
+        ver = vr["data"].get("version", "?")
+        log(f"  📌 Target Ollama version: {ver}", "INFO")
 
 # ============================================================
 # TELEGRAM NOTIFIER
@@ -2289,15 +2306,27 @@ Examples:
   ./launcher.sh deploy --model gemma:2b --all
   ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434
   
-  # OLLAMA API
-  ./launcher.sh api -t 1.2.3.4:11434 --push mymodel:tag
-  ./launcher.sh api -t 1.2.3.4:11434 --create newmodel --modelfile ./Modelfile
-  ./launcher.sh api -t 1.2.3.4:11434 --copy old:latest --dest new:latest
-  ./launcher.sh api -t 1.2.3.4:11434 --delete model:tag
-  ./launcher.sh api -t 1.2.3.4:11434 --ps
-  ./launcher.sh api -t 1.2.3.4:11434 --embed nomic-embed-text --prompt "hello world"
-  ./launcher.sh api -t 1.2.3.4:11434 --generate gemma:2b --prompt "hi"
-  ./launcher.sh api -t 1.2.3.4:11434 --version-of
+  # PUSH
+  ./launcher.sh push -t 1.2.3.4:11434 -m mymodel:tag
+  
+  # CREATE
+  ./launcher.sh create -t 1.2.3.4:11434 -m newmodel --modelfile ./Modelfile
+  ./launcher.sh create -t 1.2.3.4:11434 -m newmodel --from base:latest
+  
+  # COPY
+  ./launcher.sh copy -t 1.2.3.4:11434 -s old:latest -d new:latest
+  
+  # REMOVE
+  ./launcher.sh remove -t 1.2.3.4:11434 -m model:tag
+  
+  # PS
+  ./launcher.sh ps -t 1.2.3.4:11434
+  
+  # EMBED
+  ./launcher.sh embed -t 1.2.3.4:11434 -m nomic-embed-text -p "hello world"
+  
+  # GENERATE
+  ./launcher.sh generate -t 1.2.3.4:11434 -m gemma:2b -p "tell me a joke"
   
   # EXPORT
   ./launcher.sh export --format html
@@ -2352,28 +2381,51 @@ Examples:
     sp.add_argument("--pull", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Pull model info from target")
     sp.add_argument("--analyze", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Deep analyze a specific model")
     
-    # ─── DEPLOY / PUSH MODEL ───
-    sp = subparsers.add_parser("deploy", help="Push/pull a HuggingFace model onto remote Ollama instances")
+    # ─── DEPLOY (pull model onto instance) ───
+    sp = subparsers.add_parser("deploy", help="Pull a model onto remote Ollama instances (/api/pull)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Model name to deploy (e.g., gemma:2b, hf.co/username/model)")
     sp.add_argument("--target", "-t", type=str, help="Specific target (ip:port)")
     sp.add_argument("--all", action="store_true", help="Deploy to ALL saved instances")
     sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
-    # ─── OLLAMA API ───
-    sp = subparsers.add_parser("api", help="Direct Ollama API calls — push/create/copy/delete/ps/embed/generate/version")
+    # ─── PUSH (push model to registry) ───
+    sp = subparsers.add_parser("push", help="Push model from remote instance to registry (/api/push)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
-    sp.add_argument("--push", dest="push_model", type=str, metavar="MODEL", help="Push model to registry")
-    sp.add_argument("--create", type=str, metavar="NAME", help="Create model on remote instance")
-    sp.add_argument("--modelfile", type=str, metavar="FILE", help="Modelfile path (for --create)")
-    sp.add_argument("--from", dest="from_model", type=str, metavar="BASE", help="Base model (for --create)")
-    sp.add_argument("--copy", dest="copy_model", type=str, metavar="SOURCE", help="Copy model within instance")
-    sp.add_argument("--dest", type=str, metavar="DEST", help="Destination name (for --copy)")
-    sp.add_argument("--delete", dest="delete_model", type=str, metavar="MODEL", help="Delete model from instance")
-    sp.add_argument("--ps", action="store_true", help="List running models (processes)")
-    sp.add_argument("--embed", type=str, metavar="MODEL", help="Generate embedding")
-    sp.add_argument("--generate", type=str, metavar="MODEL", help="Generate completion")
-    sp.add_argument("--prompt", type=str, metavar="TEXT", help="Prompt text for embed/generate")
-    sp.add_argument("--version-of", action="store_true", help="Show Ollama version info")
+    sp.add_argument("--model", "-m", type=str, required=True, help="Model name:tag to push")
+    
+    # ─── CREATE (create model from Modelfile) ───
+    sp = subparsers.add_parser("create", help="Create model from Modelfile on remote instance (/api/create)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--model", "-m", type=str, required=True, help="New model name")
+    sp.add_argument("--modelfile", type=str, help="Path to Modelfile")
+    sp.add_argument("--from", dest="from_model", type=str, metavar="BASE", help="Base model name to create from")
+    
+    # ─── COPY (copy model within instance) ───
+    sp = subparsers.add_parser("copy", help="Copy model within a remote instance (/api/copy)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--source", "-s", type=str, required=True, help="Source model name:tag")
+    sp.add_argument("--dest", "-d", type=str, required=True, help="Destination model name:tag")
+    
+    # ─── REMOVE (delete model) ───
+    sp = subparsers.add_parser("remove", help="Delete model from remote instance (/api/delete)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--model", "-m", type=str, required=True, help="Model name:tag to remove")
+    
+    # ─── PS (list running models) ───
+    sp = subparsers.add_parser("ps", help="List running models on remote instance (/api/ps)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    
+    # ─── EMBED (generate embeddings) ───
+    sp = subparsers.add_parser("embed", help="Generate embeddings via remote instance (/api/embed)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--model", "-m", type=str, required=True, help="Embedding model name")
+    sp.add_argument("--prompt", "-p", type=str, required=True, help="Input text for embedding")
+    
+    # ─── GENERATE (generate completion) ───
+    sp = subparsers.add_parser("generate", help="Generate completion via remote instance (/api/generate)")
+    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--model", "-m", type=str, required=True, help="Model name to use")
+    sp.add_argument("--prompt", "-p", type=str, required=True, help="Prompt text")
     
     # ─── PROXY ───
     sp = subparsers.add_parser("proxy", help="Start proxy to remote Ollama instance (OpenAI compatible)")
@@ -2601,8 +2653,26 @@ Examples:
         else:
             log("Specify --target or --all", "ERROR")
     
-    elif args.command == "api":
-        handle_api_command(args)
+    elif args.command == "push":
+        cmd_push(args)
+    
+    elif args.command == "create":
+        cmd_create(args)
+    
+    elif args.command == "copy":
+        cmd_copy(args)
+    
+    elif args.command == "remove":
+        cmd_remove(args)
+    
+    elif args.command == "ps":
+        cmd_ps(args)
+    
+    elif args.command == "embed":
+        cmd_embed(args)
+    
+    elif args.command == "generate":
+        cmd_generate(args)
     
     elif args.command == "proxy":
         if args.socks:
