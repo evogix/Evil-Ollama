@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Evil-Ollama v3.0 — Exposed Ollama Hunter & Security Tool
 # Usage: ./launcher.sh <command> [options]
 #   ./launcher.sh scan --random 10000
