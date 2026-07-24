@@ -6,3 +6,4 @@ evilollama_report.html
 evilollama_instances.csv
 chat_export_*.json
 *.log
+backup file: evilollama_instances_backup.json
