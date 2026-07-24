@@ -1,0 +1,950 @@
+[
+  {
+    "ip": "200.137.215.69",
+    "port": 11434,
+    "url": "http://200.137.215.69:11434",
+    "models": [
+      "huihui_ai/qwen3.5-abliterated:27b",
+      "huihui_ai/qwen3.6-abliterated:27b",
+      "huihui_ai/glm-4.7-flash-abliterated:latest",
+      "gemma4:26b",
+      "mistral-medium-3.5:latest",
+      "nomic-embed-text-v2-moe:latest",
+      "qwen3-embedding:0.6b",
+      "nomic-embed-text:latest",
+      "huihui_ai/gemma-4-abliterated:12b",
+      "huihui_ai/gpt-oss-abliterated:latest",
+      "huihui_ai/gemma-4-abliterated:26b",
+      "laguna-xs-2.1:latest",
+      "kimi-k2.7-code:cloud",
+      "HydraTeam/HydraB23:latest",
+      "huihui_ai/qwen3.5-abliterated:9b",
+      "HydraTeam/HydraB22:latest",
+      "huihui_ai/qwen3.5-abliterated:2B",
+      "HydraTeam/HydraV1:latest",
+      "kimi-k2.6:cloud",
+      "minimax-m3:cloud",
+      "deepseek-v4-flash:cloud",
+      "glm-5.1:cloud",
+      "minimax-m2.5:cloud",
+      "deepseek-v3.2:cloud",
+      "minimax-m2.7:cloud",
+      "glm-4.7:cloud",
+      "glm-5.2:cloud",
+      "x/flux2-klein:latest",
+      "deepseek-v4-pro:cloud",
+      "qwen3:8b",
+      "llama3.1:latest",
+      "llama31-ciap:latest",
+      "llama_3.1_simapes:latest",
+      "llama_3.1_planejamento:latest",
+      "llama_3.1_ibge:latest",
+      "llama_3.1_chatpp:latest",
+      "llama_3.1_sus_3:latest",
+      "llama31-ciap-simapes:latest",
+      "llama_3.1_sus:latest",
+      "llama-CIAP-transicao:latest",
+      "llama31-ciap-ibge:latest",
+      "llama3.1:8b-instruct-q8_0",
+      "gemma3:27b",
+      "gemma3:12b"
+    ],
+    "model_count": 44,
+    "running_models": [
+      "gemma3:12b",
+      "gemma3:27b"
+    ],
+    "running_count": 2,
+    "total_size_bytes": 346023341780,
+    "total_size_human": "322.26 GB",
+    "version": "0.20.7",
+    "timestamp": "2026-07-24T23:52:33.618000",
+    "tags_response": {
+      "models": [
+        {
+          "name": "huihui_ai/qwen3.5-abliterated:27b",
+          "model": "huihui_ai/qwen3.5-abliterated:27b",
+          "modified_at": "2026-07-24T03:22:27.132115666Z",
+          "size": 17420432772,
+          "digest": "e9ff39f1ea000e961c6e8be8165592dedc0d91eaf450169d55369d54cc86da0c",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "27.8B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "huihui_ai/qwen3.6-abliterated:27b",
+          "model": "huihui_ai/qwen3.6-abliterated:27b",
+          "modified_at": "2026-07-24T03:22:27.128115666Z",
+          "size": 17420432805,
+          "digest": "418838acbea7dad6eca43e2f74519307235e62b584e08ab7a6e7d6916cff7507",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "27.8B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "huihui_ai/glm-4.7-flash-abliterated:latest",
+          "model": "huihui_ai/glm-4.7-flash-abliterated:latest",
+          "modified_at": "2026-07-24T03:22:27.080115668Z",
+          "size": 18765925127,
+          "digest": "998f411fc8eb9f99dd2661d6a0ec05817588aa109ae730916bab5bc550d0767f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "glm4moelite",
+            "families": [
+              "glm4moelite"
+            ],
+            "parameter_size": "29.9B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "gemma4:26b",
+          "model": "gemma4:26b",
+          "modified_at": "2026-07-24T03:22:27.080115668Z",
+          "size": 17987581215,
+          "digest": "5571076f3d70050487b26b341705799e0ab29b808164f90d20d4cf84f699d251",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma4",
+            "families": [
+              "gemma4"
+            ],
+            "parameter_size": "25.8B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "mistral-medium-3.5:latest",
+          "model": "mistral-medium-3.5:latest",
+          "modified_at": "2026-07-24T03:22:27.412115654Z",
+          "size": 80241475099,
+          "digest": "0341632adb051badc332bd814779ab931ab78619750bebe3b7c7b1401e9d70df",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "mistral3",
+            "families": [
+              "mistral3"
+            ],
+            "parameter_size": "127.7B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "nomic-embed-text-v2-moe:latest",
+          "model": "nomic-embed-text-v2-moe:latest",
+          "modified_at": "2026-07-24T03:22:27.084115668Z",
+          "size": 957680763,
+          "digest": "ff9c2f10ef5e3722623a1b396e1e04efc27a93112c83e9b7b7b9ca1d05620965",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert-moe",
+            "families": [
+              "nomic-bert-moe"
+            ],
+            "parameter_size": "475.29M",
+            "quantization_level": "F16"
+          }
+        },
+        {
+          "name": "qwen3-embedding:0.6b",
+          "model": "qwen3-embedding:0.6b",
+          "modified_at": "2026-07-24T03:22:27.080115668Z",
+          "size": 639150858,
+          "digest": "ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "595.78M",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-07-24T03:22:27.084115668Z",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16"
+          }
+        },
+        {
+          "name": "huihui_ai/gemma-4-abliterated:12b",
+          "model": "huihui_ai/gemma-4-abliterated:12b",
+          "modified_at": "2026-07-24T03:22:27.116115666Z",
+          "size": 7556507919,
+          "digest": "526eca3f97570d4ad7fea7ca1d91d2b85f9ad5014e4b0f6cc10d22621f2e70d5",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma4",
+            "families": [
+              "gemma4"
+            ],
+            "parameter_size": "11.9B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "huihui_ai/gpt-oss-abliterated:latest",
+          "model": "huihui_ai/gpt-oss-abliterated:latest",
+          "modified_at": "2026-07-24T03:22:27.148115665Z",
+          "size": 13792656623,
+          "digest": "81c701845c4945940852ba02e3fda8b919cd513da988eec9e3b4cd7bde243b4c",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gpt-oss",
+            "families": [
+              "gpt-oss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "F16"
+          }
+        },
+        {
+          "name": "huihui_ai/gemma-4-abliterated:26b",
+          "model": "huihui_ai/gemma-4-abliterated:26b",
+          "modified_at": "2026-07-24T03:22:27.080115668Z",
+          "size": 17987581282,
+          "digest": "114865317d3cbd3e1375dc5c0329bca90817acf673667a8adc958ed45b5e979b",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma4",
+            "families": [
+              "gemma4"
+            ],
+            "parameter_size": "25.8B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "laguna-xs-2.1:latest",
+          "model": "laguna-xs-2.1:latest",
+          "modified_at": "2026-07-23T03:12:28.97195194Z",
+          "size": 20274700911,
+          "digest": "a8562dfd0cad8475148f5c7b8d896ce1c5e18231cfe973459a9a9627116c11fd",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "laguna",
+            "families": [
+              "laguna"
+            ],
+            "parameter_size": "33.4B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "kimi-k2.7-code:cloud",
+          "model": "kimi-k2.7-code:cloud",
+          "remote_model": "kimi-k2.7-code",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-07-07T14:09:59.377135426Z",
+          "size": 388,
+          "digest": "eda07a6592375dcbde7cf167b6d6b368cdd28e244f9d71559fb59919aca882fa",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "kimi",
+            "families": [
+              "kimi"
+            ],
+            "parameter_size": "1t",
+            "quantization_level": "int4"
+          }
+        },
+        {
+          "name": "HydraTeam/HydraB23:latest",
+          "model": "HydraTeam/HydraB23:latest",
+          "modified_at": "2026-06-30T06:39:41.288274803Z",
+          "size": 6594474929,
+          "digest": "1a9506ed561136142f0961442ba50649e3768e430a7759c4c76f2f6276eb7dd0",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "huihui_ai/qwen3.5-abliterated:9b",
+          "model": "huihui_ai/qwen3.5-abliterated:9b",
+          "modified_at": "2026-06-29T14:16:36.354435037Z",
+          "size": 6594474755,
+          "digest": "92a443adb124f5e805bbdee23fdb38fcd22a7bf00a1016b53f764e741369c600",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "HydraTeam/HydraB22:latest",
+          "model": "HydraTeam/HydraB22:latest",
+          "modified_at": "2026-06-29T13:13:59.906572611Z",
+          "size": 1942624394,
+          "digest": "0ab153fd26f71fc0545f8c9faf754514c457194a9a0b9b92cc673d0c625c10ad",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "1.9B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "huihui_ai/qwen3.5-abliterated:2B",
+          "model": "huihui_ai/qwen3.5-abliterated:2B",
+          "modified_at": "2026-06-29T07:54:28.971274717Z",
+          "size": 1945323683,
+          "digest": "ff8b5c8b4197bde89c5d2f16a1d60c93762efc41bb8907190baaa5a16231f315",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "2.3B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "HydraTeam/HydraV1:latest",
+          "model": "HydraTeam/HydraV1:latest",
+          "modified_at": "2026-06-29T06:56:56.055401175Z",
+          "size": 1980391984,
+          "digest": "154519f465277b2202bb504729254b2b898391602be1707428f58fe16259a772",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "1.9B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "kimi-k2.6:cloud",
+          "model": "kimi-k2.6:cloud",
+          "remote_model": "kimi-k2.6",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.717693671Z",
+          "size": 384,
+          "digest": "a90cd0d1590c53b9f9f4e0f66218e4c514d190652b8bed2842528e2530e34dc6",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "kimi-k2",
+            "families": [
+              "kimi-k2"
+            ],
+            "parameter_size": "1T",
+            "quantization_level": "int4"
+          }
+        },
+        {
+          "name": "minimax-m3:cloud",
+          "model": "minimax-m3:cloud",
+          "remote_model": "minimax-m3",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.753693669Z",
+          "size": 362,
+          "digest": "d03a959f45c04ab183e245922ecb46ebccfb9d5e55bdee5e9055271ee70195e3",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "minimax-m3",
+            "families": [
+              "minimax-m3"
+            ],
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "deepseek-v4-flash:cloud",
+          "model": "deepseek-v4-flash:cloud",
+          "remote_model": "deepseek-v4-flash",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.665693672Z",
+          "size": 348,
+          "digest": "ea027821675c940f02cd3be0762002a8268c3d101fbbbf479f1f5c2025a8dfe6",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "glm-5.1:cloud",
+          "model": "glm-5.1:cloud",
+          "remote_model": "glm-5.1",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.713693671Z",
+          "size": 327,
+          "digest": "59472abf9d0aab2eb1b0106ba1c1f59266a00ed41f63d2a2b1db082e7346b982",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "minimax-m2.5:cloud",
+          "model": "minimax-m2.5:cloud",
+          "remote_model": "minimax-m2.5",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.681693672Z",
+          "size": 337,
+          "digest": "c0d5751c800fd16b7cd21fce68e99e0db6d489d7196794f9a46b97b2f97036f5",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "deepseek-v3.2:cloud",
+          "model": "deepseek-v3.2:cloud",
+          "remote_model": "deepseek-v3.2",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.761693669Z",
+          "size": 397,
+          "digest": "55f7c48fb187da99c128a270e9d3f86886bac6b3477569db4fa1288a96ad0512",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "deepseek3.2",
+            "families": [
+              "deepseek3.2"
+            ],
+            "parameter_size": "671B",
+            "quantization_level": "fp8"
+          }
+        },
+        {
+          "name": "minimax-m2.7:cloud",
+          "model": "minimax-m2.7:cloud",
+          "remote_model": "minimax-m2.7",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.701693671Z",
+          "size": 375,
+          "digest": "06daa293c105f0bd71fd19420e4d15cae66cc5f71cb8f55b4f998e96ec8ab67a",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "minimax",
+            "families": [
+              "minimax"
+            ],
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "glm-4.7:cloud",
+          "model": "glm-4.7:cloud",
+          "remote_model": "glm-4.7",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:39.697693671Z",
+          "size": 327,
+          "digest": "0236088648195aa13eaa52faa8152e8ac4fd7e4e137939d57a2a5576a8fd3df8",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "glm-5.2:cloud",
+          "model": "glm-5.2:cloud",
+          "remote_model": "glm-5.2",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-28T13:33:38.285693723Z",
+          "size": 338,
+          "digest": "ce8fd6f94793a6786f6858717b38067feba631861e3b35e8122cb6635004cd4a",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "glm",
+            "families": [
+              "glm"
+            ],
+            "parameter_size": "756b",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "x/flux2-klein:latest",
+          "model": "x/flux2-klein:latest",
+          "modified_at": "2026-06-03T22:02:36.719682015Z",
+          "size": 5726794301,
+          "digest": "50a0c0ab15ac55078483105dc0aa5d0e3ba6a5103309f511adb85f3e3ab186e3",
+          "details": {
+            "parent_model": "",
+            "format": "safetensors",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "deepseek-v4-pro:cloud",
+          "model": "deepseek-v4-pro:cloud",
+          "remote_model": "deepseek-v4-pro",
+          "remote_host": "https://ollama.com:443",
+          "modified_at": "2026-06-03T13:09:09.904854215Z",
+          "size": 344,
+          "digest": "22bfd5026abd64524341f1f90c4885c91a879767c39e3e39a4a3f000b3d0815f",
+          "details": {
+            "parent_model": "",
+            "format": "",
+            "family": "",
+            "families": null,
+            "parameter_size": "",
+            "quantization_level": ""
+          }
+        },
+        {
+          "name": "qwen3:8b",
+          "model": "qwen3:8b",
+          "modified_at": "2026-06-02T23:44:14.562622959Z",
+          "size": 5225388164,
+          "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama3.1:latest",
+          "model": "llama3.1:latest",
+          "modified_at": "2026-05-29T00:20:09.594365377Z",
+          "size": 4920753328,
+          "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama31-ciap:latest",
+          "model": "llama31-ciap:latest",
+          "modified_at": "2026-05-28T14:46:17.22762641Z",
+          "size": 4920757769,
+          "digest": "c1fd33436e9efe01e0175629c8abb6890f427fc14d2a2bce79d03a903ae0059b",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama_3.1_simapes:latest",
+          "model": "llama_3.1_simapes:latest",
+          "modified_at": "2026-05-28T14:26:31.747669827Z",
+          "size": 4920757053,
+          "digest": "442f4abdddbbbe6d9899074c4ff56ea88f7ced1b4721e544281fae5e35ff5859",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama_3.1_planejamento:latest",
+          "model": "llama_3.1_planejamento:latest",
+          "modified_at": "2026-05-28T14:26:06.023670769Z",
+          "size": 8540805301,
+          "digest": "1bf6bcc6b4cf1ae897ba2695e564860d673e46b502fe274869d309b29e2a004c",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "llama_3.1_ibge:latest",
+          "model": "llama_3.1_ibge:latest",
+          "modified_at": "2026-05-28T14:25:43.631671589Z",
+          "size": 8540806050,
+          "digest": "fce66425170d69c7aa65c0b67fb1ab8fc59d7b71bf5a0ee002ad557ae5adf30a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "llama_3.1_chatpp:latest",
+          "model": "llama_3.1_chatpp:latest",
+          "modified_at": "2026-05-28T14:25:15.799672608Z",
+          "size": 4920757769,
+          "digest": "c1fd33436e9efe01e0175629c8abb6890f427fc14d2a2bce79d03a903ae0059b",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama_3.1_sus_3:latest",
+          "model": "llama_3.1_sus_3:latest",
+          "modified_at": "2026-05-28T14:10:10.395705767Z",
+          "size": 4920758705,
+          "digest": "6a91af7d8c75502a956dd9ddfe396fa5640e797f20b40cf0e976d4cb7a7946ab",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama31-ciap-simapes:latest",
+          "model": "llama31-ciap-simapes:latest",
+          "modified_at": "2026-05-28T14:03:38.967720103Z",
+          "size": 4920757053,
+          "digest": "442f4abdddbbbe6d9899074c4ff56ea88f7ced1b4721e544281fae5e35ff5859",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama_3.1_sus:latest",
+          "model": "llama_3.1_sus:latest",
+          "modified_at": "2026-05-28T13:58:12.615732055Z",
+          "size": 4920756312,
+          "digest": "b01a1b12626858d5d1b7f3a92920b41fd08e3463e81cf61d0f85bfad62ea707f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "llama-CIAP-transicao:latest",
+          "model": "llama-CIAP-transicao:latest",
+          "modified_at": "2026-05-28T13:57:11.551734291Z",
+          "size": 8540805301,
+          "digest": "1bf6bcc6b4cf1ae897ba2695e564860d673e46b502fe274869d309b29e2a004c",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "llama31-ciap-ibge:latest",
+          "model": "llama31-ciap-ibge:latest",
+          "modified_at": "2026-05-28T13:56:57.043734823Z",
+          "size": 8540806050,
+          "digest": "fce66425170d69c7aa65c0b67fb1ab8fc59d7b71bf5a0ee002ad557ae5adf30a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "llama3.1:8b-instruct-q8_0",
+          "model": "llama3.1:8b-instruct-q8_0",
+          "modified_at": "2026-05-28T13:56:57.003734824Z",
+          "size": 8540789934,
+          "digest": "b158ded76fa05be6bce8a682099ce5df8c5571340a04cf63a2923464679db576",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "8.0B",
+            "quantization_level": "Q8_0"
+          }
+        },
+        {
+          "name": "gemma3:27b",
+          "model": "gemma3:27b",
+          "modified_at": "2026-05-28T02:28:03.449248603Z",
+          "size": 17396936941,
+          "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "27.4B",
+            "quantization_level": "Q4_K_M"
+          }
+        },
+        {
+          "name": "gemma3:12b",
+          "model": "gemma3:12b",
+          "modified_at": "2026-05-28T01:50:20.845331467Z",
+          "size": 8149190253,
+          "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "12.2B",
+            "quantization_level": "Q4_K_M"
+          }
+        }
+      ]
+    },
+    "fingerprint": null,
+    "geo": null,
+    "cves": [],
+    "source": "scan",
+    "response_time_ms": 0
+  },
+  {
+    "ip": "13.107.213.68",
+    "port": 11434,
+    "url": "http://13.107.213.68:11434",
+    "hostname": "ai.azure.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:20.204905",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "150.171.110.82",
+    "port": 11434,
+    "url": "http://150.171.110.82:11434",
+    "hostname": "ml.azure.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:20.884251",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "20.236.44.162",
+    "port": 11434,
+    "url": "http://20.236.44.162:11434",
+    "hostname": "gpu.azure.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:21.200067",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "23.98.108.168",
+    "port": 11434,
+    "url": "http://23.98.108.168:11434",
+    "hostname": "chat.azure.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:21.863777",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "213.133.116.46",
+    "port": 11434,
+    "url": "http://213.133.116.46:11434",
+    "hostname": "inference.hetzner.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:31.880702",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "151.80.231.43",
+    "port": 11434,
+    "url": "http://151.80.231.43:11434",
+    "hostname": "chat.ovh.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:56:52.383494",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "49.44.117.251",
+    "port": 11434,
+    "url": "http://49.44.117.251:11434",
+    "hostname": "ai.oracle.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:57:24.381246",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  },
+  {
+    "ip": "23.200.216.66",
+    "port": 11434,
+    "url": "http://23.200.216.66:11434",
+    "hostname": "chat.oracle.com",
+    "models": [],
+    "model_count": 0,
+    "version": "unknown",
+    "source": "dns_discovery",
+    "timestamp": "2026-07-24T23:57:28.342794",
+    "cves": [],
+    "geo": null,
+    "fingerprint": null,
+    "response_time_ms": 0
+  }
+]

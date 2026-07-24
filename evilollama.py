@@ -2050,7 +2050,7 @@ def export_html(instances: List[dict], output: str = "evilollama_report.html"):
                 </td>
                 <td class="running">{inst.get('running_count', 0)}</td>
                 <td>{inst.get('total_size_human', '?')}</td>
-                <td>{inst.get('geo', {}).get('city', '?')}, {inst.get('geo', {}).get('country', '?')}</td>
+                <td>{(inst.get('geo') or {}).get('city', '?')}, {(inst.get('geo') or {}).get('country', '?')}</td>
                 <td class="actions">
                     <a href="http://{inst.get('ip', '')}:{inst.get('port', 11434)}/api/tags" target="_blank">🔍</a>
                     <a href="http://{inst.get('ip', '')}:{inst.get('port', 11434)}" target="_blank">🌐</a>
@@ -2700,15 +2700,15 @@ Examples:
                 print(f"                   ... and {fp['model_count']-8} more")
             if fp.get('running_models'):
                 print(f"  {C.CYAN}Running:{C.END}      {', '.join(fp['running_models'])} ({fp['running_count']})")
-            print(f"  {C.CYAN}Total Size:{C.END}    {fp['total_size_human']}")
-            print(f"  {C.CYAN}Response:{C.END}      {fp['response_time_ms'].get('total', '?')}ms")
+            print(f"  {C.CYAN}Total Size:{C.END}    {fp.get('total_model_size_human', fp.get('total_size_human', '?'))}")
+            print(f"  {C.CYAN}Response:{C.END}      {fp.get('response_time_ms', {}).get('total', '?')}ms")
             
-            if fp['model_details']:
+            if fp.get('model_details'):
                 print(f"\n  {C.BOLD}Model Details:{C.END}")
                 for md in fp['model_details'][:10]:
                     print(f"    {C.GREEN}{md['name']}{C.END} — {md['size_human']}")
             
-            print(f"\n  {C.CYAN}CVEs:{C.END}          {len(fp['cves'])}")
+            print(f"\n  {C.CYAN}CVEs:{C.END}          {len(fp.get('cves', []))}")
             for cve in fp['cves']:
                 print(f"     {C.RED}⚠ {cve['id']}: {cve['desc']} [{cve['severity']}] (CVSS:{cve.get('cvss','?')}){C.END}")
             
