@@ -1,54 +1,54 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                🦙 NOVA - Ollama Hunter v3.0                            ║
-║  Next-Gen Exposed Ollama Instance Finder & Security Tool                ║
+║                🦙 EVIL-OLLAMA v3.0                            ║
+║  Exposed Ollama Instance Hunter & Proxy Tool                ║
 ║  For authorized security research & bug bounty purposes only           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
 Usage:
   # -- SCANNING --
-  python nova.py scan --random 10000           # Async TCP scan random IPs
-  python nova.py scan --cidr 0.0.0.0/8         # CIDR range scan
-  python nova.py scan --file ips.txt           # IP list from file
-  python nova.py scan --shodan API_KEY         # Shodan search
-  python nova.py scan --censys ID:SECRET       # Censys search
-  python nova.py scan --fofa EMAIL:KEY         # FOFA search
-  python nova.py scan --dns example.com        # DNS-based discovery
-  python nova.py scan --ct example.com         # Certificate transparency logs
+  ./launcher.sh scan --random 10000           # Async TCP scan random IPs
+  ./launcher.sh scan --cidr 0.0.0.0/8         # CIDR range scan
+  ./launcher.sh scan --file ips.txt           # IP list from file
+  ./launcher.sh scan --shodan API_KEY         # Shodan search
+  ./launcher.sh scan --censys ID:SECRET       # Censys search
+  ./launcher.sh scan --fofa EMAIL:KEY         # FOFA search
+  ./launcher.sh scan --dns example.com        # DNS-based discovery
+  ./launcher.sh scan --ct example.com         # Certificate transparency logs
 
   # -- EXPLOIT / VULN SCAN --
-  python nova.py vuln --target 1.2.3.4:11434   # Full vulnerability scan
-  python nova.py vuln --all                    # Vuln scan all found instances
-  python nova.py exploit --cve CVE-2024-37032 --target 1.2.3.4:11434
+  ./launcher.sh vuln --target 1.2.3.4:11434   # Full vulnerability scan
+  ./launcher.sh vuln --all                    # Vuln scan all found instances
+  ./launcher.sh exploit --cve CVE-2024-37032 --target 1.2.3.4:11434
 
   # -- MODEL OPERATIONS --
-  python nova.py models --target 1.2.3.4:11434       # List models
-  python nova.py models --pull target model_name     # Download model
-  python nova.py models --analyze target model_name  # Analyze model details
+  ./launcher.sh models --target 1.2.3.4:11434       # List models
+  ./launcher.sh models --pull target model_name     # Download model
+  ./launcher.sh models --analyze target model_name  # Analyze model details
 
   # -- PROXY --
-  python nova.py proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
-  python nova.py proxy --socks 1.2.3.4:11434    # SOCKS5 proxy mode
-  python nova.py proxy --chain                   # Chain multiple instances
+  ./launcher.sh proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
+  ./launcher.sh proxy --socks 1.2.3.4:11434    # SOCKS5 proxy mode
+  ./launcher.sh proxy --chain                   # Chain multiple instances
 
   # -- CHAT --
-  python nova.py chat --target 1.2.3.4:11434    # Interactive chat
-  python nova.py chat --batch prompts.txt       # Batch prompt execution
+  ./launcher.sh chat --target 1.2.3.4:11434    # Interactive chat
+  ./launcher.sh chat --batch prompts.txt       # Batch prompt execution
 
   # -- FINGERPRINT --
-  python nova.py fingerprint --target 1.2.3.4:11434  # Deep instance analysis
-  python nova.py fingerprint --all                   # Fingerprint all
+  ./launcher.sh fingerprint --target 1.2.3.4:11434  # Deep instance analysis
+  ./launcher.sh fingerprint --all                   # Fingerprint all
 
   # -- EXPORT --
-  python nova.py export --format html           # Export to HTML report
-  python nova.py export --format json           # Export to JSON
+  ./launcher.sh export --format html           # Export to HTML report
+  ./launcher.sh export --format json           # Export to JSON
 
   # -- AUTO-PWN --
-  python nova.py autopwn --random 5000          # Scan → Vuln Scan → Proxy
+  ./launcher.sh autopwn --random 5000          # Scan → Vuln Scan → Proxy
 
   # -- MONITOR (CLI only, no web) --
-  python nova.py monitor --interval 3600        # Continuous scan daemon
+  ./launcher.sh monitor --interval 3600        # Continuous scan daemon
 """
 
 import asyncio
@@ -80,9 +80,9 @@ VERSION = "3.0.0"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
-FOUND_DB = "nova_instances.json"
-CONFIG_FILE = "nova_config.json"
-USER_AGENT = "NovaHunter/3.0 (Security Research)"
+FOUND_DB = "evilollama_instances.json"
+CONFIG_FILE = "evilollama_config.json"
+USER_AGENT = "EvilOllama/3.0 (Security Research)"
 
 # Colors for terminal output
 class C:
@@ -102,8 +102,8 @@ class C:
 BANNER = f"""
 {C.BOLD}{C.MAGENTA}
 ╔══════════════════════════════════════════════════════════════════╗
-║                    🦙 NOVA v{VERSION}                              ║
-║         Next-Gen Exposed Ollama Instance Finder                  ║
+║                    🦙 EVIL-OLLAMA v{VERSION}                       ║
+║         Exposed Ollama Instance Hunter & Proxy Tool              ║
 ║              For authorized security testing only                ║
 ╚══════════════════════════════════════════════════════════════════╝
 {C.END}
@@ -928,7 +928,7 @@ def scan_vulnerabilities(target: str) -> dict:
         resp = requests.get(f"{target}/api/tags", timeout=5)
         if resp.status_code == 200:
             results["vulnerabilities"].append({
-                "id": "NOVA-NO-AUTH",
+                "id": "EVIL-NO-AUTH",
                 "name": "No Authentication Required",
                 "desc": "The Ollama API is fully accessible without any authentication",
                 "severity": "HIGH", "cvss": 7.5,
@@ -966,7 +966,7 @@ def scan_vulnerabilities(target: str) -> dict:
                 requests.delete(f"{target}/api/delete", json={"model": "test-vuln-scan"}, timeout=5)
             except: pass
             results["vulnerabilities"].append({
-                "id": "NOVA-MODEL-CREATE",
+                "id": "EVIL-MODEL-CREATE",
                 "name": "Unauthenticated Model Creation",
                 "desc": "Can create/upload models without authentication — allows poisoning",
                 "severity": "HIGH", "cvss": 8.0,
@@ -984,7 +984,7 @@ def scan_vulnerabilities(target: str) -> dict:
                              timeout=5)
         if resp.status_code == 200:
             results["vulnerabilities"].append({
-                "id": "NOVA-MODEL-DELETE",
+                "id": "EVIL-MODEL-DELETE",
                 "name": "Unauthenticated Model Deletion",
                 "desc": "Can delete models without authentication — denial of service",
                 "severity": "HIGH", "cvss": 7.5,
@@ -1003,7 +1003,7 @@ def scan_vulnerabilities(target: str) -> dict:
         cors_header = resp.headers.get("Access-Control-Allow-Origin", "")
         if cors_header in ["*", "https://evil.com", "null"]:
             results["vulnerabilities"].append({
-                "id": "NOVA-CORS",
+                "id": "EVIL-CORS",
                 "name": "CORS Misconfiguration",
                 "desc": f"API allows cross-origin requests from '{cors_header}'",
                 "severity": "MEDIUM", "cvss": 6.1,
@@ -1022,7 +1022,7 @@ def scan_vulnerabilities(target: str) -> dict:
                            ["server", "x-powered-by", "x-ollama-version"]]
         if sensitive_headers:
             results["info"].append({
-                "id": "NOVA-INFO-DISC",
+                "id": "EVIL-INFO-DISC",
                 "name": "Server Information Disclosure",
                 "desc": f"Headers disclose: {', '.join(sensitive_headers)}",
                 "severity": "LOW", "cvss": 2.5,
@@ -1056,7 +1056,7 @@ def scan_vulnerabilities(target: str) -> dict:
         requests.get(f"{target}/api/version", timeout=5)
         rt = int((time.time() - t0) * 1000)
         results["info"].append({
-            "id": "NOVA-TIMING",
+            "id": "EVIL-TIMING",
             "name": "Response Timing",
             "desc": "Server responds in {rt}ms — usable for timing attacks",
             "severity": "LOW", "cvss": 2.0,
@@ -1072,7 +1072,7 @@ def scan_vulnerabilities(target: str) -> dict:
         resp = requests.get(f"{target}/api/tags", timeout=5)
         if not resp.headers.get("Set-Cookie"):
             results["info"].append({
-                "id": "NOVA-NO-CSRF",
+                "id": "EVIL-NO-CSRF",
                 "name": "No CSRF Protection",
                 "desc": "API doesn't use CSRF tokens (no session cookies set)",
                 "severity": "LOW", "cvss": 3.0,
@@ -1088,7 +1088,7 @@ def scan_vulnerabilities(target: str) -> dict:
         resp = requests.get(f"{target}/metrics", timeout=5)
         if resp.status_code == 200 and "ollama" in resp.text.lower():
             results["vulnerabilities"].append({
-                "id": "NOVA-METRICS",
+                "id": "EVIL-METRICS",
                 "name": "Prometheus Metrics Exposed",
                 "desc": "Prometheus metrics endpoint exposed without authentication",
                 "severity": "MEDIUM", "cvss": 5.3,
@@ -1222,7 +1222,7 @@ def send_telegram(message: str, token: str = None, chat_id: str = None) -> bool:
         chat_id = chat_id or config.get("telegram_chat_id", "")
     
     if not token or not chat_id:
-        log("Telegram not configured. Use: nova config --telegram-token BOT_TOKEN --telegram-chat CHAT_ID", "WARN")
+        log("Telegram not configured. Use: ./launcher.sh config --telegram-token BOT_TOKEN --telegram-chat CHAT_ID", "WARN")
         return False
     
     try:
@@ -1276,7 +1276,7 @@ def start_proxy(target: str, listen_port: int = 8080, listen_host: str = "127.0.
     @app.route("/", methods=["GET"])
     def index():
         return jsonify({
-            "service": "Nova Ollama Proxy",
+            "service": "Evil-Ollama Proxy",
             "target": target, "version": VERSION,
             "status": "active",
             "endpoints": [
@@ -1429,7 +1429,7 @@ def start_proxy(target: str, listen_port: int = 8080, listen_host: str = "127.0.
 def start_socks_proxy(target: str, listen_port: int = 1080, listen_host: str = "127.0.0.1"):
     """Start a SOCKS5 proxy that tunnels to a remote Ollama instance"""
     log(f"🔌 SOCKS5 proxy mode not yet implemented — use standard proxy instead", "WARN")
-    log(f"   Use: nova proxy --target {target} --port {listen_port - 8000}", "INFO")
+    log(f"   Use: ./launcher.sh proxy --target {target} --port {listen_port - 8000}", "INFO")
     start_proxy(target, listen_port - 8000, listen_host)
 
 # ============================================================
@@ -1668,7 +1668,7 @@ def batch_chat(target: str, prompt_file: str):
 # EXPORT FUNCTIONS
 # ============================================================
 
-def export_html(instances: List[dict], output: str = "nova_report.html"):
+def export_html(instances: List[dict], output: str = "evilollama_report.html"):
     """Generate beautiful HTML report"""
     models_list = []
     for inst in instances:
@@ -1694,7 +1694,7 @@ def export_html(instances: List[dict], output: str = "nova_report.html"):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦙 Nova Ollama Hunter Report</title>
+    <title>🦙 Evil-Ollama Report</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1733,7 +1733,7 @@ def export_html(instances: List[dict], output: str = "nova_report.html"):
 </head>
 <body>
     <div class="container">
-        <h1>🦙 Nova Ollama Hunter Report</h1>
+        <h1>🦙 Evil-Ollama Report</h1>
         <p class="subtitle">Generated {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | v{VERSION} | {len(instances)} instance(s)</p>
         
         <div class="stats">
@@ -1781,7 +1781,7 @@ def export_html(instances: List[dict], output: str = "nova_report.html"):
         <p>{" ".join(f'<span class="model-tag">{m}</span>' for m in unique_models)}</p>
         
         <div class="footer">
-            Generated by Nova Ollama Hunter v{VERSION} | For authorized security research only
+            Generated by Evil-Ollama v{VERSION} | For authorized security research only
         </div>
     </div>
 </body>
@@ -1792,7 +1792,7 @@ def export_html(instances: List[dict], output: str = "nova_report.html"):
     log(f"📄 HTML report saved: {output} ({os.path.getsize(output)/1024:.1f} KB)", "OK")
     return output
 
-def export_csv(instances: List[dict], output: str = "nova_instances.csv"):
+def export_csv(instances: List[dict], output: str = "evilollama_instances.csv"):
     with open(output, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["IP", "Port", "Version", "Models", "Model Count", "Running", "Size",
@@ -1814,7 +1814,7 @@ def export_csv(instances: List[dict], output: str = "nova_instances.csv"):
             ])
     log(f"📄 CSV saved: {output}", "OK")
 
-def export_json(instances: List[dict], output: str = "nova_instances_export.json"):
+def export_json(instances: List[dict], output: str = "evilollama_instances_export.json"):
     save_json(output, instances)
     log(f"📄 JSON saved: {output}", "OK")
 
@@ -1923,7 +1923,7 @@ def autopwn(random_count: int = 5000, vuln_scan: bool = True, proxy_port: int = 
     print(f"  {C.BOLD}Total models:{C.END}       {sum(inst.get('model_count', 0) for inst in found_instances)}")
     print(f"  {C.BOLD}Vulnerabilities:{C.END}    {total_vulns}")
     print(f"  {C.BOLD}CVEs detected:{C.END}      {total_cves}")
-    print(f"  {C.BOLD}Report:{C.END}             nova_report.html")
+    print(f"  {C.BOLD}Report:{C.END}             evilollama_report.html")
     print(f"{C.MAGENTA}{'='*60}{C.END}\n")
     
     # Start proxy for first instance
@@ -1975,10 +1975,10 @@ def show_instances(instances: List[dict], geo_lookup: bool = False):
         print(f"      {C.DIM}Models:{C.END}  {models_str} ({inst.get('model_count', len(models))} total)")
         print(f"      {C.DIM}Location:{C.END} {loc}")
         print(f"      {C.DIM}Source:{C.END}   {inst.get('source', 'scan')}")
-        print(f"      {C.DIM}Commands:{C.END} {C.YELLOW}nova chat -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}nova proxy -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}nova vuln -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}nova fingerprint -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"      {C.DIM}Commands:{C.END} {C.YELLOW}./launcher.sh chat -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}./launcher.sh proxy -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}./launcher.sh vuln -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}./launcher.sh fingerprint -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
     
     print(f"\n{C.BOLD}{'='*100}{C.END}\n")
 
@@ -1990,49 +1990,49 @@ def main():
     global SCAN_TIMEOUT, MAX_CONCURRENT, FOUND_DB
     
     parser = argparse.ArgumentParser(
-        description=f"🦙 Nova Ollama Hunter v{VERSION} — Next-Gen Exposed Ollama Instance Finder",
+        description=f"🦙 Evil-Ollama v{VERSION} — Exposed Ollama Instance Hunter & Proxy Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # SCANNING
-  nova scan --random 10000
-  nova scan --cidr 0.0.0.0/8
-  nova scan --shodan API_KEY
+  ./launcher.sh scan --random 10000
+  ./launcher.sh scan --cidr 0.0.0.0/8
+  ./launcher.sh scan --shodan API_KEY
   
   # DISCOVERY
-  nova scan --dns example.com
-  nova scan --ct example.com
+  ./launcher.sh scan --dns example.com
+  ./launcher.sh scan --ct example.com
   
   # VULNERABILITY SCANNING
-  nova vuln --target 1.2.3.4:11434
-  nova vuln --all
+  ./launcher.sh vuln --target 1.2.3.4:11434
+  ./launcher.sh vuln --all
   
   # PROXY
-  nova proxy --target 1.2.3.4:11434
+  ./launcher.sh proxy --target 1.2.3.4:11434
   
   # CHAT
-  nova chat --target 1.2.3.4:11434
-  nova chat --batch prompts.txt --target 1.2.3.4:11434
+  ./launcher.sh chat --target 1.2.3.4:11434
+  ./launcher.sh chat --batch prompts.txt --target 1.2.3.4:11434
   
   # FINGERPRINT
-  nova fingerprint --target 1.2.3.4:11434
+  ./launcher.sh fingerprint --target 1.2.3.4:11434
   
   # MODEL OPERATIONS
-  nova models --target 1.2.3.4:11434
-  nova models --pull target model_name
+  ./launcher.sh models --target 1.2.3.4:11434
+  ./launcher.sh models --pull target model_name
   
   # EXPORT
-  nova export --format html
+  ./launcher.sh export --format html
   
   # AUTO-PWN (Scan → Vuln Scan → Proxy → Report)
-  nova autopwn --random 5000
+  ./launcher.sh autopwn --random 5000
   
   # MONITOR (CLI daemon)
-  nova monitor --interval 3600
+  ./launcher.sh monitor --interval 3600
   
   # CONFIG
-  nova config --show
-  nova config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
+  ./launcher.sh config --show
+  ./launcher.sh config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
         """
     )
     
@@ -2224,7 +2224,7 @@ Examples:
                 break
         else:
             log(f"⚠ CVE {args.cve} not directly testable — instance may be patched or version unknown", "WARN")
-            log(f"   Tip: Run 'nova fingerprint -t {args.target}' for detailed version info", "INFO")
+            log(f"   Tip: Run './launcher.sh fingerprint -t {args.target}' for detailed version info", "INFO")
     
     elif args.command == "models":
         if args.target:

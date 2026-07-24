@@ -242,7 +242,7 @@ Checks 18 endpoints including: `/api/tags`, `/api/version`, `/api/ps`, `/api/sho
   💀 [HIGH    ] Unauthenticated Model Creation
 
 [12:30:14] [▶ STEP ] Step 4/4: Generating report...
-[12:30:14] [📄 OK   ] HTML report saved: nova_report.html (45.2 KB)
+[12:30:14] [📄 OK   ] HTML report saved: evilollama_report.html (45.2 KB)
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║  🚀 AUTO-PWN COMPLETE                                           ║
@@ -250,7 +250,7 @@ Checks 18 endpoints including: `/api/tags`, `/api/version`, `/api/ps`, `/api/sho
 ║  Total models:        23                                        ║
 ║  Vulnerabilities:     12                                        ║
 ║  CVEs detected:       5                                         ║
-║  Report:              nova_report.html                          ║
+║  Report:              evilollama_report.html                          ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 [12:30:15] [🔌 PROXY] Proxy → 127.0.0.1:9090 → 203.0.113.42:11434
