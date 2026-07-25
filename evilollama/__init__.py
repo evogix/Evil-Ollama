@@ -102,7 +102,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.2.3"
+VERSION = "3.2.4"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
@@ -2564,10 +2564,10 @@ def run_docs_server():
     import webbrowser
     from pathlib import Path
     
-    # Find docs.html relative to the script/package
+    # Find index.html relative to the script/package
     doc_paths = [
-        Path(__file__).parent / "docs.html",                   # pip package / source
-        Path.cwd() / "docs.html",                              # cwd
+        Path(__file__).parent / "index.html",                  # pip package / source
+        Path.cwd() / "index.html",                             # cwd
     ]
     
     doc_file = None
