@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evil-ollama"
-version = "3.2.1"
+version = "3.2.3"
 description = "🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -47,4 +47,4 @@ evil-ollama = "evilollama:main"
 include = ["evilollama*"]
 
 [tool.setuptools.package-data]
-evilollama = ["*.md", "*.txt"]
+evilollama = ["*.md", "*.txt", "docs.html"]

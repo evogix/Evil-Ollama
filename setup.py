@@ -13,7 +13,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
 
 setup(
     name="evil-ollama",
-    version="3.2.1",
+    version="3.2.3",
     author="evogix",
     author_email="",
     description="🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool",
@@ -24,7 +24,8 @@ setup(
         "Documentation": "https://github.com/evogix/Evil-Ollama/blob/main/DOCS.md",
         "Source": "https://github.com/evogix/Evil-Ollama",
     },
-    packages=find_packages(),
+    packages=find_packages(include=["evilollama", "evilollama.*"]),
+    package_data={"evilollama": ["docs.html"]},
     python_requires=">=3.8",
     install_requires=requirements,
     entry_points={
