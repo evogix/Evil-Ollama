@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                🦙 EVIL-OLLAMA v3.2.5                          ║
+║                🦙 EVIL-OLLAMA v3.2.6                          ║
 ║  Exposed Ollama Instance Hunter & Proxy Tool                ║
 ║  For authorized security research & bug bounty purposes only           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
@@ -102,7 +102,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.2.5"
+VERSION = "3.2.6"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
@@ -2710,6 +2710,7 @@ def main():
   # CONFIG
   {_cmd} config --show
   {_cmd} config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
+  {_cmd} config --find-chat-id               # Auto-detect your chat ID
   
 v{VERSION} — https://github.com/evogix/Evil-Ollama | pip install evil-ollama"""
     )
@@ -2863,6 +2864,7 @@ v{VERSION} — https://github.com/evogix/Evil-Ollama | pip install evil-ollama""
     sp.add_argument("--set", type=str, nargs=2, metavar=("KEY","VALUE"), help="Set config key=value")
     sp.add_argument("--telegram-token", type=str, help="Set Telegram bot token")
     sp.add_argument("--telegram-chat", type=str, help="Set Telegram chat ID")
+    sp.add_argument("--find-chat-id", action="store_true", help="Auto-detect Telegram chat ID from bot")
     sp.add_argument("--shodan-key", type=str, help="Set Shodan API key")
     
     # ─── AUTOPWN ───
@@ -3369,6 +3371,48 @@ v{VERSION} — https://github.com/evogix/Evil-Ollama | pip install evil-ollama""
             if args.shodan_key:
                 cfg = get_config(); cfg["shodan_key"] = args.shodan_key; save_config(cfg)
                 log("✅ Shodan key set", "OK")
+            if args.find_chat_id:
+                cfg = get_config()
+                token = cfg.get("telegram_token", "") or os.environ.get("TELEGRAM_BOT_TOKEN", "")
+                if not token:
+                    log("❌ No Telegram token configured. Use: evilollama config --telegram-token BOT_TOKEN", "ERROR")
+                    return
+                try:
+                    import urllib.request
+                    url = f"https://api.telegram.org/bot{token}/getUpdates"
+                    resp = urllib.request.urlopen(url, timeout=10)
+                    data = json.loads(resp.read().decode())
+                    if not data.get("ok"):
+                        log(f"❌ Telegram API error: {data}", "ERROR")
+                        return
+                    msgs = data.get("result", [])
+                    if not msgs:
+                        log("📱 No messages found! Send a message to your bot first (e.g. /start), then try again.", "WARN")
+                        log("   Then re-run: evilollama config --find-chat-id", "INFO")
+                        return
+                    chats = {}
+                    for m in msgs:
+                        chat = m.get("message", {}).get("chat", {})
+                        cid = chat.get("id")
+                        if cid and cid not in chats:
+                            chats[cid] = chat.get("first_name", chat.get("title", f"Chat {cid}"))
+                    print(f"\n{'─'*50}")
+                    print(f"  📱 Found {len(chats)} chat(s):")
+                    print(f"{'─'*50}")
+                    for cid, name in chats.items():
+                        current = " ← CURRENT" if str(cid) == cfg.get("telegram_chat_id") else ""
+                        print(f"  🆔 {cid}  ({name}){current}")
+                    print(f"{'─'*50}")
+                    if len(chats) == 1:
+                        cid = list(chats.keys())[0]
+                        cfg["telegram_chat_id"] = str(cid)
+                        save_config(cfg)
+                        log(f"✅ Auto-set chat ID to {cid} ({chats[cid]})", "OK")
+                    else:
+                        log("ℹ️ Multiple chats found. Set manually:", "INFO")
+                        log(f"   evilollama config --telegram-chat <ID>", "INFO")
+                except Exception as e:
+                    log(f"❌ Failed to fetch chat ID: {e}", "ERROR")
     
     elif args.command == "autopwn":
         autopwn(args.random, not args.no_vuln, args.port, args.geo)
