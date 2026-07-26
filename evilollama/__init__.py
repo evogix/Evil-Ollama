@@ -1,80 +1,80 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                🦙 EVIL-OLLAMA v3.0                            ║
+║                🦙 EVIL-OLLAMA v3.2.5                          ║
 ║  Exposed Ollama Instance Hunter & Proxy Tool                ║
 ║  For authorized security research & bug bounty purposes only           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
 Usage:
   # -- SCANNING --
-  ./launcher.sh scan --random 10000           # Async TCP scan random IPs
-  ./launcher.sh scan --cidr 0.0.0.0/8         # CIDR range scan
-  ./launcher.sh scan --file ips.txt           # IP list from file
-  ./launcher.sh scan --shodan API_KEY         # Shodan search
-  ./launcher.sh scan --censys ID:SECRET       # Censys search
-  ./launcher.sh scan --fofa EMAIL:KEY         # FOFA search
-  ./launcher.sh scan --dns example.com        # DNS-based discovery
-  ./launcher.sh scan --ct example.com         # Certificate transparency logs
+  evilollama scan --random 10000           # Async TCP scan random IPs
+  evilollama scan --cidr 0.0.0.0/8         # CIDR range scan
+  evilollama scan --file ips.txt           # IP list from file
+  evilollama scan --shodan API_KEY         # Shodan search
+  evilollama scan --censys ID:SECRET       # Censys search
+  evilollama scan --fofa EMAIL:KEY         # FOFA search
+  evilollama scan --dns example.com        # DNS-based discovery
+  evilollama scan --ct example.com         # Certificate transparency logs
 
   # -- EXPLOIT / VULN SCAN --
-  ./launcher.sh vuln --target 1.2.3.4:11434   # Full vulnerability scan
-  ./launcher.sh vuln --all                    # Vuln scan all found instances
-  ./launcher.sh exploit --cve CVE-2024-37032 --target 1.2.3.4:11434
+  evilollama vuln --target 1.2.3.4:11434   # Full vulnerability scan
+  evilollama vuln --all                    # Vuln scan all found instances
+  evilollama exploit --cve CVE-2024-37032 --target 1.2.3.4:11434
 
   # -- MODEL OPERATIONS --
-  ./launcher.sh models --target 1.2.3.4:11434       # List models
-  ./launcher.sh models --pull target model_name     # Download model
-  ./launcher.sh models --analyze target model_name  # Analyze model details
+  evilollama models --target 1.2.3.4:11434       # List models
+  evilollama models --pull target model_name     # Download model
+  evilollama models --analyze target model_name  # Analyze model details
   
   # -- DEPLOY (pull model onto remote) --
-  ./launcher.sh deploy --model gemma:2b --all        # Pull model onto all found instances
-  ./launcher.sh deploy --model gemma:2b --target 1.2.3.4:11434  # Pull to specific target
+  evilollama deploy --model gemma:2b --all        # Pull model onto all found instances
+  evilollama deploy --model gemma:2b --target 1.2.3.4:11434  # Pull to specific target
   
   # -- PUSH (push model from remote to registry) --
-  ./launcher.sh push --target 1.2.3.4:11434 --model mymodel:tag
+  evilollama push --target 1.2.3.4:11434 --model mymodel:tag
   
   # -- CREATE (create model from Modelfile) --
-  ./launcher.sh create --target 1.2.3.4:11434 --model newmodel --modelfile ./Modelfile
-  ./launcher.sh create --target 1.2.3.4:11434 --model newmodel --from base:latest
+  evilollama create --target 1.2.3.4:11434 --model newmodel --modelfile ./Modelfile
+  evilollama create --target 1.2.3.4:11434 --model newmodel --from base:latest
   
   # -- COPY (copy model within instance) --
-  ./launcher.sh copy --target 1.2.3.4:11434 --source old:latest --dest new:latest
+  evilollama copy --target 1.2.3.4:11434 --source old:latest --dest new:latest
   
   # -- REMOVE (delete model from instance) --
-  ./launcher.sh remove --target 1.2.3.4:11434 --model model:tag
+  evilollama remove --target 1.2.3.4:11434 --model model:tag
   
   # -- PS (list running models) --
-  ./launcher.sh ps --target 1.2.3.4:11434
+  evilollama ps --target 1.2.3.4:11434
   
   # -- EMBED (generate embeddings) --
-  ./launcher.sh embed --target 1.2.3.4:11434 --model nomic-embed-text --prompt "hello world"
+  evilollama embed --target 1.2.3.4:11434 --model nomic-embed-text --prompt "hello world"
   
   # -- GENERATE (generate completion) --
-  ./launcher.sh generate --target 1.2.3.4:11434 --model gemma:2b --prompt "tell me a joke"
+  evilollama generate --target 1.2.3.4:11434 --model gemma:2b --prompt "tell me a joke"
 
   # -- PROXY --
-  ./launcher.sh proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
-  ./launcher.sh proxy --socks 1.2.3.4:11434    # SOCKS5 proxy mode
-  ./launcher.sh proxy --chain                   # Chain multiple instances
+  evilollama proxy --target 1.2.3.4:11434   # Start proxy (OpenAI compatible)
+  evilollama proxy --socks 1.2.3.4:11434    # SOCKS5 proxy mode
+  evilollama proxy --chain                   # Chain multiple instances
 
   # -- CHAT --
-  ./launcher.sh chat --target 1.2.3.4:11434    # Interactive chat
-  ./launcher.sh chat --batch prompts.txt       # Batch prompt execution
+  evilollama chat --target 1.2.3.4:11434    # Interactive chat
+  evilollama chat --batch prompts.txt       # Batch prompt execution
 
   # -- FINGERPRINT --
-  ./launcher.sh fingerprint --target 1.2.3.4:11434  # Deep instance analysis
-  ./launcher.sh fingerprint --all                   # Fingerprint all
+  evilollama fingerprint --target 1.2.3.4:11434  # Deep instance analysis
+  evilollama fingerprint --all                   # Fingerprint all
 
   # -- EXPORT --
-  ./launcher.sh export --format html           # Export to HTML report
-  ./launcher.sh export --format json           # Export to JSON
+  evilollama export --format html           # Export to HTML report
+  evilollama export --format json           # Export to JSON
 
   # -- AUTO-PWN --
-  ./launcher.sh autopwn --random 5000          # Scan → Vuln Scan → Proxy
+  evilollama autopwn --random 5000          # Scan → Vuln Scan → Proxy
 
   # -- MONITOR (CLI only, no web) --
-  ./launcher.sh monitor --interval 3600        # Continuous scan daemon
+  evilollama monitor --interval 3600        # Continuous scan daemon
 """
 
 import asyncio
@@ -102,7 +102,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.2.4"
+VERSION = "3.2.5"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
@@ -1503,7 +1503,7 @@ def send_telegram(message: str, token: str = None, chat_id: str = None) -> bool:
         chat_id = chat_id or config.get("telegram_chat_id", "")
     
     if not token or not chat_id:
-        log("Telegram not configured. Use: ./launcher.sh config --telegram-token BOT_TOKEN --telegram-chat CHAT_ID", "WARN")
+        log("Telegram not configured. Use: evilollama config --telegram-token BOT_TOKEN --telegram-chat CHAT_ID", "WARN")
         return False
     
     try:
@@ -1710,7 +1710,7 @@ def start_proxy(target: str, listen_port: int = 8080, listen_host: str = "127.0.
 def start_socks_proxy(target: str, listen_port: int = 1080, listen_host: str = "127.0.0.1"):
     """Start a SOCKS5 proxy that tunnels to a remote Ollama instance"""
     log(f"🔌 SOCKS5 proxy mode not yet implemented — use standard proxy instead", "WARN")
-    log(f"   Use: ./launcher.sh proxy --target {target} --port {listen_port - 8000}", "INFO")
+    log(f"   Use: evilollama proxy --target {target} --port {listen_port - 8000}", "INFO")
     start_proxy(target, listen_port - 8000, listen_host)
 
 # ============================================================
@@ -2256,10 +2256,10 @@ def show_instances(instances: List[dict], geo_lookup: bool = False):
         print(f"      {C.DIM}Models:{C.END}  {models_str} ({inst.get('model_count', len(models))} total)")
         print(f"      {C.DIM}Location:{C.END} {loc}")
         print(f"      {C.DIM}Source:{C.END}   {inst.get('source', 'scan')}")
-        print(f"      {C.DIM}Commands:{C.END} {C.YELLOW}./launcher.sh chat -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}./launcher.sh proxy -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}./launcher.sh vuln -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
-        print(f"                {C.YELLOW}./launcher.sh fingerprint -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"      {C.DIM}Commands:{C.END} {C.YELLOW}evilollama chat -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}evilollama proxy -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}evilollama vuln -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
+        print(f"                {C.YELLOW}evilollama fingerprint -t {inst['ip']}:{inst.get('port', 11434)}{C.END}")
     
     print(f"\n{C.BOLD}{'='*100}{C.END}\n")
 
@@ -2634,7 +2634,7 @@ def main():
     # Detect command prefix: ./launcher.sh for source, evilollama for pip
     _cmd = "evilollama"
     _argv0 = os.path.basename(sys.argv[0]) if sys.argv[0] else ""
-    if _argv0 in ("launcher.sh",) or os.path.exists("launcher.sh"):
+    if _argv0 in ("launcher.sh",):
         _cmd = "./launcher.sh"
     elif _argv0 in ("evilollama", "evil-ollama", "evil_ollama"):
         _cmd = _argv0
