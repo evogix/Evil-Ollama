@@ -208,11 +208,12 @@ Checks 18 endpoints including: `/api/tags`, `/api/version`, `/api/ps`, `/api/sho
 ### ⚙️ CONFIGURATION
 
 ```bash
-./launcher.sh config --show                               # Show config
-./launcher.sh config --telegram-token "BOT_TOKEN"          # Telegram alerts
-./launcher.sh config --telegram-chat "CHAT_ID"
-./launcher.sh config --shodan-key "API_KEY"
-./launcher.sh config --set scan_timeout 3                  # Custom setting
+evilollama config --show                               # Show config
+evilollama config --telegram-token "BOT_TOKEN"          # Telegram alerts
+evilollama config --telegram-chat "CHAT_ID"
+evilollama config --find-chat-id                        # Auto-detect chat ID
+evilollama config --shodan-key "API_KEY"
+evilollama config --set scan_timeout 3                  # Custom setting
 ```
 
 ---

@@ -633,8 +633,14 @@ One-command pipeline: Scan → Geolocate → Vuln Scan → Export Report
 ### Setup
 
 ```bash
-./launcher.sh config --telegram-token "8907662225:AAG3AP6dajn-Bh17PB7hlKktNwfQP3fZNEU"
-./launcher.sh config --telegram-chat "5448384682"
+# Step 1: Set your bot token
+evilollama config --telegram-token "8907662225:AAG3AP6dajn-Bh17PB7hlKktNwfQP3fZNEU"
+
+# Step 2: Auto-detect your chat ID (message the bot first!)
+evilollama config --find-chat-id
+
+# OR manually set chat ID:
+evilollama config --telegram-chat "5448384682"
 ```
 
 ### What Triggers Notifications
@@ -666,15 +672,16 @@ One-command pipeline: Scan → Geolocate → Vuln Scan → Export Report
 
 ```bash
 # View current configuration
-./launcher.sh config --show
+evilollama config --show
 
 # Set API keys
-./launcher.sh config --telegram-token "YOUR_TOKEN"
-./launcher.sh config --telegram-chat "YOUR_CHAT_ID"
-./launcher.sh config --shodan-key "YOUR_KEY"
+evilollama config --telegram-token "YOUR_TOKEN"
+evilollama config --telegram-chat "YOUR_CHAT_ID"
+evilollama config --find-chat-id          # Auto-detect chat ID from bot
+evilollama config --shodan-key "YOUR_KEY"
 
 # Set key=value pair
-./launcher.sh config --set key value
+evilollama config --set key value
 ```
 
 ### Configuration File
@@ -874,6 +881,7 @@ Failures on one instance don't block the entire operation.
  config --show                View config
  config --telegram-token TK   Set Telegram bot token
  config --telegram-chat ID    Set Telegram chat ID
+ config --find-chat-id        Auto-detect chat ID from bot
 ```
 
 ---
