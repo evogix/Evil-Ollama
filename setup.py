@@ -13,7 +13,7 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
 
 setup(
     name="evil-ollama",
-    version="3.2.7",
+    version="3.2.8",
     author="evogix",
     author_email="",
     description="🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool",
