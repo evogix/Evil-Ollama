@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EVIL-OLLAMA v3.2.9 — Exposed Ollama Instance Hunter & Proxy Tool
+EVIL-OLLAMA v3.3.0 — Exposed Ollama Instance Hunter & Proxy Tool
 For authorized security research & bug bounty purposes only.
 
 Usage:
@@ -99,7 +99,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.2.9"
+VERSION = "3.3.0"
 AUTHOR = "@faizalx1337"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
