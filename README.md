@@ -23,6 +23,10 @@
 ╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/evogix/Evil-Ollama/main/evilollama.png" alt="Evil-Ollama Icon" width="200"/>
+</p>
+
 # 🦙 EVIL-OLLAMA
 
 > **Next-Gen Exposed Ollama Instance Finder, Vulnerability Scanner & Proxy Tool**

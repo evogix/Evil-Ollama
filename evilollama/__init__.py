@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                🦙 EVIL-OLLAMA v3.2.8                          ║
+║                🦙 EVIL-OLLAMA v3.2.9                          ║
 ║  Exposed Ollama Instance Hunter & Proxy Tool                ║
 ║  For authorized security research & bug bounty purposes only           ║
 ╚══════════════════════════════════════════════════════════════════════════╝
@@ -102,7 +102,7 @@ from concurrent.futures import ThreadPoolExecutor
 # ============================================================
 # CONFIGURATION
 # ============================================================
-VERSION = "3.2.8"
+VERSION = "3.2.9"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
