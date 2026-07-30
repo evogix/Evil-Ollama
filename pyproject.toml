@@ -11,7 +11,7 @@ requires-python = ">=3.8"
 license = {text = "MIT"}
 keywords = ["ollama", "security", "bug-bounty", "llm", "ai", "pentesting", "red-team"]
 authors = [
-    {name = "evogix"},
+    {name = "@faizalx1337"},
 ]
 
 classifiers = [

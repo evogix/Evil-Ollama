@@ -285,24 +285,10 @@ pip install aiohttp flask requests
 
 ## ⚠️ LEGAL DISCLAIMER
 
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║                                                                          ║
-║  This tool is for AUTHORIZED SECURITY TESTING only.                      ║
-║                                                                          ║
-║  Only use on systems you own or have explicit written permission         ║
-║  to test. Unauthorized scanning or exploitation is ILLEGAL.              ║
-║                                                                          ║
-║  The authors assume no liability for misuse.                             ║
-║                                                                          ║
-╚══════════════════════════════════════════════════════════════════════════╝
-```
+> **For authorized security testing only.** Use only on systems you own or have explicit written permission to test. Unauthorized scanning or exploitation is ILLEGAL.
+>
+> Author: [@faizalx1337](https://github.com/faizalx1337) · No liability for misuse.
 
 ---
 
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║  EVIL-OLLAMA v3.0 · https://github.com/evogix/Evil-Ollama               ║
-║  For authorized security research & bug bounty purposes only            ║
-╚══════════════════════════════════════════════════════════════════════════╝
-```
+> **EVIL-OLLAMA v3.0** — [github.com/evogix/Evil-Ollama](https://github.com/evogix/Evil-Ollama) · For authorized security research & bug bounty purposes only

@@ -887,4 +887,4 @@ Failures on one instance don't block the entire operation.
 ---
 
 > **Evil-Ollama v3.0** — For authorized security testing only.
-> Built by [evogix](https://github.com/evogix/Evil-Ollama)
+> Built by [@faizalx1337](https://github.com/evogix/Evil-Ollama)

@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-╔══════════════════════════════════════════════════════════════════════════╗
-║                🦙 EVIL-OLLAMA v3.2.9                          ║
-║  Exposed Ollama Instance Hunter & Proxy Tool                ║
-║  For authorized security research & bug bounty purposes only           ║
-╚══════════════════════════════════════════════════════════════════════════╝
+EVIL-OLLAMA v3.2.9 — Exposed Ollama Instance Hunter & Proxy Tool
+For authorized security research & bug bounty purposes only.
 
 Usage:
   # -- SCANNING --
@@ -103,6 +100,7 @@ from concurrent.futures import ThreadPoolExecutor
 # CONFIGURATION
 # ============================================================
 VERSION = "3.2.9"
+AUTHOR = "@faizalx1337"
 DEFAULT_OLLAMA_PORT = 11434
 SCAN_TIMEOUT = 4
 MAX_CONCURRENT = 1000
@@ -125,15 +123,7 @@ class C:
     END = '\033[0m'
     CLEAR = '\033[2J\033[H'
 
-BANNER = f"""
-{C.BOLD}{C.MAGENTA}
-╔══════════════════════════════════════════════════════════════════╗
-║                    🦙 EVIL-OLLAMA v{VERSION}                       ║
-║         Exposed Ollama Instance Hunter & Proxy Tool              ║
-║              For authorized security testing only                ║
-╚══════════════════════════════════════════════════════════════════╝
-{C.END}
-"""
+BANNER = f"{C.BOLD}{C.MAGENTA}🦙 EVIL-OLLAMA v{VERSION}{C.END} — {C.CYAN}Exposed Ollama Instance Hunter & Proxy Tool{C.END}"
 
 # Known CVEs for Ollama versions — comprehensive
 CVE_DATABASE = {
@@ -2627,7 +2617,9 @@ def main():
     if any(a in sys.argv for a in ("-v", "--version")):
         print(f"Evil-Ollama v{VERSION}")
         print("🦙 Exposed Ollama Instance Hunter, Proxy & API Manipulation Tool")
+        print(f"Author: {AUTHOR}")
         print(f"https://github.com/evogix/Evil-Ollama")
+        print(f"Install: pip install evil-ollama")
         print(f"Install: pip install evil-ollama")
         return
     
@@ -2712,7 +2704,7 @@ def main():
   {_cmd} config --telegram-token "BOT_TOKEN" --telegram-chat "123456"
   {_cmd} config --find-chat-id               # Auto-detect your chat ID
   
-v{VERSION} — https://github.com/evogix/Evil-Ollama | pip install evil-ollama"""
+v{VERSION} — Author: {AUTHOR} | https://github.com/evogix/Evil-Ollama | pip install evil-ollama"""
     )
     
     subparsers = parser.add_subparsers(dest="command")
